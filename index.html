@@ -31,6 +31,7 @@ h1{
 p{
   color:#9aa2ad;
   margin:0 0 16px;
+  line-height:1.5;
 }
 
 .clock{
@@ -50,6 +51,22 @@ p{
   height:100%;
   width:0;
   background:linear-gradient(90deg,#4e91ff,#ff56b8);
+}
+
+.soundBtn{
+  width:100%;
+  margin-top:14px;
+  border:0;
+  border-radius:14px;
+  padding:14px;
+  background:#ff7a00;
+  color:#fff;
+  font-size:16px;
+  font-weight:900;
+}
+
+.soundBtn.on{
+  background:#1f8f73;
 }
 
 .card{
@@ -126,8 +143,7 @@ button{
 <h1>모바일 밀리초 타이밍 테스트</h1>
 
 <p>
-매초 <b>n.000</b>에 최대한 가깝게 화면 아무 곳이나 탭하세요.<br>
-첫 터치 후 매초 정각에 틱 소리가 납니다.
+매초 <b>n.000</b>에 최대한 가깝게 화면 아무 곳이나 탭하세요.
 </p>
 
 <div class="clock" id="clock">
@@ -135,8 +151,12 @@ button{
 </div>
 
 <div class="bar">
-<div class="fill" id="fill"></div>
+  <div class="fill" id="fill"></div>
 </div>
+
+<button class="soundBtn" id="soundBtn">
+🔊 소리 시작
+</button>
 
 <div class="card">
 
@@ -179,7 +199,6 @@ button{
 </div>
 </div>
 
-
 <script>
 (()=>{
 
@@ -192,31 +211,50 @@ const count=$('count');
 const mae=$('mae');
 const bias=$('bias');
 const best=$('best');
+const soundBtn=$('soundBtn');
 
 let results=[];
 
 let audioCtx=null;
-let audioEnabled=false;
-let lastTickSecond=-1;
-
-
-/* 고해상도 현재시각 */
+let soundEnabled=false;
+let tickTimer=null;
 
 const nowHi=()=>{
   return performance.timeOrigin + performance.now();
 };
 
-
-/* 숫자 표시 */
-
 const fmt=v=>{
   return (v>=0?'+':'') + v.toFixed(1) + ' ms';
 };
 
+function playTick(){
 
-/* 아이폰 오디오 활성화 */
+  if(!audioCtx || audioCtx.state!=='running'){
+    return;
+  }
 
-function enableAudio(){
+  const osc=audioCtx.createOscillator();
+  const gain=audioCtx.createGain();
+
+  osc.type='square';
+  osc.frequency.value=1300;
+
+  const t=audioCtx.currentTime;
+
+  gain.gain.setValueAtTime(0.20,t);
+  gain.gain.exponentialRampToValueAtTime(
+    0.001,
+    t+0.025
+  );
+
+  osc.connect(gain);
+  gain.connect(audioCtx.destination);
+
+  osc.start(t);
+  osc.stop(t+0.03);
+}
+
+async function startSound(){
 
   if(!audioCtx){
 
@@ -226,48 +264,42 @@ function enableAudio(){
 
   }
 
-  if(audioCtx.state==='suspended'){
-    audioCtx.resume();
+  await audioCtx.resume();
+
+  /* 사용자 터치 직후 실제 소리 재생 */
+  playTick();
+
+  soundEnabled=true;
+
+  soundBtn.textContent=
+    '🔊 틱 소리 켜짐';
+
+  soundBtn.classList.add('on');
+
+  scheduleNextTick();
+}
+
+function scheduleNextTick(){
+
+  clearTimeout(tickTimer);
+
+  if(!soundEnabled){
+    return;
   }
 
-  audioEnabled=true;
+  const now=Date.now();
+
+  const delay=
+    1000 - (now % 1000);
+
+  tickTimer=setTimeout(()=>{
+
+    playTick();
+
+    scheduleNextTick();
+
+  },delay);
 }
-
-
-/* 매초 틱 소리 */
-
-function playTick(){
-
-  if(!audioEnabled || !audioCtx) return;
-
-  const osc=audioCtx.createOscillator();
-  const gain=audioCtx.createGain();
-
-  osc.type='sine';
-  osc.frequency.value=1200;
-
-  gain.gain.setValueAtTime(
-    0.22,
-    audioCtx.currentTime
-  );
-
-  gain.gain.exponentialRampToValueAtTime(
-    0.001,
-    audioCtx.currentTime+0.035
-  );
-
-  osc.connect(gain);
-  gain.connect(audioCtx.destination);
-
-  osc.start();
-
-  osc.stop(
-    audioCtx.currentTime+0.04
-  );
-}
-
-
-/* 통계 */
 
 function stats(){
 
@@ -310,12 +342,7 @@ function stats(){
     fmt(bt);
 }
 
-
-/* 화면 터치 기록 */
-
 function record(){
-
-  enableAudio();
 
   const frac=
     nowHi()%1000;
@@ -352,10 +379,7 @@ function record(){
   stats();
 }
 
-
-/* 시계 */
-
-function tick(){
+function updateClock(){
 
   const n=nowHi();
 
@@ -386,44 +410,42 @@ function tick(){
     +'.'+
 
     String(ms)
-      .padStart(3,'0');
-
+    .padStart(3,'0');
 
   fill.style.width=
     (ms/10)+'%';
 
-
-  /* 새로운 초가 시작되면 틱 */
-
-  const currentSecond=
-    Math.floor(n/1000);
-
-  if(
-    currentSecond
-    !==
-    lastTickSecond
-  ){
-
-    lastTickSecond=
-      currentSecond;
-
-    playTick();
-  }
-
-
-  requestAnimationFrame(tick);
+  requestAnimationFrame(
+    updateClock
+  );
 }
 
+soundBtn.addEventListener(
+'click',
+async e=>{
 
-/* 아이폰 터치 */
+  e.stopPropagation();
+
+  try{
+
+    await startSound();
+
+  }catch(err){
+
+    soundBtn.textContent=
+      '소리 시작 실패 - 다시 누르기';
+
+  }
+
+});
 
 document.addEventListener(
 'touchstart',
 e=>{
 
-  if(
-    e.target.closest('button')
-  ) return;
+  if(e.target.closest('button')){
+    return;
+  }
 
   e.preventDefault();
 
@@ -433,30 +455,22 @@ e=>{
 {passive:false}
 );
 
-
-/* PC에서도 동작 */
-
 document.addEventListener(
 'mousedown',
 e=>{
 
-  if(
-    e.target.closest('button')
-  ) return;
+  if(e.target.closest('button')){
+    return;
+  }
 
   record();
 
 }
 );
 
-
-/* 초기화 */
-
 $('reset').onclick=e=>{
 
   e.stopPropagation();
-
-  enableAudio();
 
   results=[];
 
@@ -468,17 +482,13 @@ $('reset').onclick=e=>{
   stats();
 };
 
-
-/* 기록 복사 */
-
 $('copy').onclick=async e=>{
 
   e.stopPropagation();
 
-  enableAudio();
-
-  if(!results.length)
+  if(!results.length){
     return;
+  }
 
   const text=
     results
@@ -504,8 +514,7 @@ $('copy').onclick=async e=>{
 
 };
 
-
-tick();
+updateClock();
 
 })();
 </script>
