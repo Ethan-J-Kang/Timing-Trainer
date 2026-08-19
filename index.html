@@ -4,105 +4,511 @@
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width,initial-scale=1,maximum-scale=1,user-scalable=no">
 <title>모바일 밀리초 타이밍 테스트</title>
+
 <style>
-body{margin:0;background:#111318;color:#f3f4f6;font-family:system-ui,-apple-system,sans-serif;touch-action:manipulation;user-select:none}
-.wrap{min-height:100vh;padding:18px;display:flex;flex-direction:column;box-sizing:border-box}
-h1{font-size:22px;margin:0 0 8px}
-p{color:#9aa2ad;margin:0 0 16px}
-.clock{font:900 clamp(38px,12vw,72px) ui-monospace,monospace;text-align:center;margin:auto 0 14px}
-.bar{height:12px;background:#2b3038;border-radius:999px;overflow:hidden}
-.fill{height:100%;width:0;background:linear-gradient(90deg,#4e91ff,#ff56b8)}
-.card{background:#1a1d23;border:1px solid #2a2e36;border-radius:18px;padding:16px;margin-top:16px}
-.label{color:#63e6be;font-weight:800;font-size:13px}
-.last{font:900 40px ui-monospace,monospace;color:#63e6be;margin:4px 0 14px}
-.grid{display:grid;grid-template-columns:1fr 1fr;gap:8px}
-.stat{background:#12151a;border-radius:12px;padding:10px}
-.k{color:#8f96a3;font-size:12px}
-.v{font:800 15px ui-monospace,monospace;margin-top:4px}
-.buttons{display:flex;gap:8px;margin-top:12px}
-button{flex:1;border:0;border-radius:12px;padding:12px;background:#2c3139;color:#fff;font-weight:800}
-.hint{text-align:center;color:#9aa2ad;font-size:13px;margin-top:12px}
+body{
+  margin:0;
+  background:#111318;
+  color:#f3f4f6;
+  font-family:system-ui,-apple-system,sans-serif;
+  touch-action:manipulation;
+  user-select:none;
+}
+
+.wrap{
+  min-height:100vh;
+  padding:18px;
+  display:flex;
+  flex-direction:column;
+  box-sizing:border-box;
+}
+
+h1{
+  font-size:22px;
+  margin:0 0 8px;
+}
+
+p{
+  color:#9aa2ad;
+  margin:0 0 16px;
+}
+
+.clock{
+  font:900 clamp(38px,12vw,72px) ui-monospace,monospace;
+  text-align:center;
+  margin:auto 0 14px;
+}
+
+.bar{
+  height:12px;
+  background:#2b3038;
+  border-radius:999px;
+  overflow:hidden;
+}
+
+.fill{
+  height:100%;
+  width:0;
+  background:linear-gradient(90deg,#4e91ff,#ff56b8);
+}
+
+.card{
+  background:#1a1d23;
+  border:1px solid #2a2e36;
+  border-radius:18px;
+  padding:16px;
+  margin-top:16px;
+}
+
+.label{
+  color:#63e6be;
+  font-weight:800;
+  font-size:13px;
+}
+
+.last{
+  font:900 40px ui-monospace,monospace;
+  color:#63e6be;
+  margin:4px 0 14px;
+}
+
+.grid{
+  display:grid;
+  grid-template-columns:1fr 1fr;
+  gap:8px;
+}
+
+.stat{
+  background:#12151a;
+  border-radius:12px;
+  padding:10px;
+}
+
+.k{
+  color:#8f96a3;
+  font-size:12px;
+}
+
+.v{
+  font:800 15px ui-monospace,monospace;
+  margin-top:4px;
+}
+
+.buttons{
+  display:flex;
+  gap:8px;
+  margin-top:12px;
+}
+
+button{
+  flex:1;
+  border:0;
+  border-radius:12px;
+  padding:12px;
+  background:#2c3139;
+  color:#fff;
+  font-weight:800;
+}
+
+.hint{
+  text-align:center;
+  color:#9aa2ad;
+  font-size:13px;
+  margin-top:12px;
+}
 </style>
 </head>
-<body>
-<div class="wrap">
-<h1>모바일 밀리초 타이밍 테스트</h1>
-<p>매초 <b>n.000</b>에 최대한 가깝게 화면 아무 곳이나 탭하세요.</p>
 
-<div class="clock" id="clock">00:00:00.000</div>
-<div class="bar"><div class="fill" id="fill"></div></div>
+<body>
+
+<div class="wrap">
+
+<h1>모바일 밀리초 타이밍 테스트</h1>
+
+<p>
+매초 <b>n.000</b>에 최대한 가깝게 화면 아무 곳이나 탭하세요.<br>
+첫 터치 후 매초 정각에 틱 소리가 납니다.
+</p>
+
+<div class="clock" id="clock">
+00:00:00.000
+</div>
+
+<div class="bar">
+<div class="fill" id="fill"></div>
+</div>
 
 <div class="card">
-  <div class="label">탭 오차</div>
-  <div class="last" id="last">—</div>
-  <div class="grid">
-    <div class="stat"><div class="k">횟수</div><div class="v" id="count">0</div></div>
-    <div class="stat"><div class="k">평균 절대오차</div><div class="v" id="mae">—</div></div>
-    <div class="stat"><div class="k">평균 편향</div><div class="v" id="bias">—</div></div>
-    <div class="stat"><div class="k">최고 기록</div><div class="v" id="best">—</div></div>
-  </div>
-  <div class="buttons">
-    <button id="reset">초기화</button>
-    <button id="copy">기록 복사</button>
-  </div>
-  <div class="hint">음수=정각보다 빠름 / 양수=정각보다 늦음</div>
+
+<div class="label">탭 오차</div>
+<div class="last" id="last">—</div>
+
+<div class="grid">
+
+<div class="stat">
+<div class="k">횟수</div>
+<div class="v" id="count">0</div>
+</div>
+
+<div class="stat">
+<div class="k">평균 절대오차</div>
+<div class="v" id="mae">—</div>
+</div>
+
+<div class="stat">
+<div class="k">평균 편향</div>
+<div class="v" id="bias">—</div>
+</div>
+
+<div class="stat">
+<div class="k">최고 기록</div>
+<div class="v" id="best">—</div>
+</div>
+
+</div>
+
+<div class="buttons">
+<button id="reset">초기화</button>
+<button id="copy">기록 복사</button>
+</div>
+
+<div class="hint">
+음수 = 정각보다 빠름 / 양수 = 정각보다 늦음
+</div>
+
 </div>
 </div>
+
 
 <script>
 (()=>{
- const $=id=>document.getElementById(id);
- const clock=$('clock'),fill=$('fill'),last=$('last'),count=$('count'),mae=$('mae'),bias=$('bias'),best=$('best');
- let results=[];
- const nowHi=()=>performance.timeOrigin+performance.now();
- const fmt=v=>(v>=0?'+':'')+v.toFixed(1)+' ms';
 
- function stats(){
-   count.textContent=results.length;
-   if(!results.length){mae.textContent=bias.textContent=best.textContent='—';return;}
-   const b=results.reduce((a,x)=>a+x,0)/results.length;
-   const m=results.reduce((a,x)=>a+Math.abs(x),0)/results.length;
-   const bt=results.reduce((a,x)=>Math.abs(x)<Math.abs(a)?x:a,results[0]);
-   mae.textContent=m.toFixed(1)+' ms';
-   bias.textContent=fmt(b);
-   best.textContent=fmt(bt);
- }
- function record(){
-   const frac=nowHi()%1000;
-   const d=frac<500?frac:frac-1000;
-   results.push(d);
-   last.textContent=fmt(d);
-   const a=Math.abs(d);
-   last.style.color=a<=30?'#63e6be':a<=80?'#ffd166':'#ff9b71';
-   stats();
- }
- function tick(){
-   const n=nowHi(),d=new Date(n),ms=Math.floor(n%1000);
-   clock.textContent=
-     String(d.getHours()).padStart(2,'0')+':'+
-     String(d.getMinutes()).padStart(2,'0')+':'+
-     String(d.getSeconds()).padStart(2,'0')+'.'+
-     String(ms).padStart(3,'0');
-   fill.style.width=(ms/10)+'%';
-   requestAnimationFrame(tick);
- }
- document.addEventListener('touchstart',e=>{
-   if(e.target.closest('button')) return;
-   e.preventDefault();
-   record();
- },{passive:false});
- document.addEventListener('mousedown',e=>{
-   if(e.target.closest('button')) return;
-   record();
- });
- $('reset').onclick=e=>{e.stopPropagation();results=[];last.textContent='—';last.style.color='#63e6be';stats();};
- $('copy').onclick=async e=>{
-   e.stopPropagation(); if(!results.length)return;
-   const text=results.map((v,i)=>(i+1)+'. '+fmt(v)).join('\n');
-   try{await navigator.clipboard.writeText(text);alert('복사됨');}catch{alert(text);}
- };
- tick();
+const $=id=>document.getElementById(id);
+
+const clock=$('clock');
+const fill=$('fill');
+const last=$('last');
+const count=$('count');
+const mae=$('mae');
+const bias=$('bias');
+const best=$('best');
+
+let results=[];
+
+let audioCtx=null;
+let audioEnabled=false;
+let lastTickSecond=-1;
+
+
+/* 고해상도 현재시각 */
+
+const nowHi=()=>{
+  return performance.timeOrigin + performance.now();
+};
+
+
+/* 숫자 표시 */
+
+const fmt=v=>{
+  return (v>=0?'+':'') + v.toFixed(1) + ' ms';
+};
+
+
+/* 아이폰 오디오 활성화 */
+
+function enableAudio(){
+
+  if(!audioCtx){
+
+    audioCtx=
+      new (window.AudioContext ||
+           window.webkitAudioContext)();
+
+  }
+
+  if(audioCtx.state==='suspended'){
+    audioCtx.resume();
+  }
+
+  audioEnabled=true;
+}
+
+
+/* 매초 틱 소리 */
+
+function playTick(){
+
+  if(!audioEnabled || !audioCtx) return;
+
+  const osc=audioCtx.createOscillator();
+  const gain=audioCtx.createGain();
+
+  osc.type='sine';
+  osc.frequency.value=1200;
+
+  gain.gain.setValueAtTime(
+    0.22,
+    audioCtx.currentTime
+  );
+
+  gain.gain.exponentialRampToValueAtTime(
+    0.001,
+    audioCtx.currentTime+0.035
+  );
+
+  osc.connect(gain);
+  gain.connect(audioCtx.destination);
+
+  osc.start();
+
+  osc.stop(
+    audioCtx.currentTime+0.04
+  );
+}
+
+
+/* 통계 */
+
+function stats(){
+
+  count.textContent=results.length;
+
+  if(!results.length){
+
+    mae.textContent='—';
+    bias.textContent='—';
+    best.textContent='—';
+
+    return;
+  }
+
+  const b=
+    results.reduce((a,x)=>a+x,0)
+    / results.length;
+
+  const m=
+    results.reduce(
+      (a,x)=>a+Math.abs(x),0
+    ) / results.length;
+
+  const bt=
+    results.reduce(
+      (a,x)=>
+        Math.abs(x)<Math.abs(a)
+        ? x
+        : a,
+      results[0]
+    );
+
+  mae.textContent=
+    m.toFixed(1)+' ms';
+
+  bias.textContent=
+    fmt(b);
+
+  best.textContent=
+    fmt(bt);
+}
+
+
+/* 화면 터치 기록 */
+
+function record(){
+
+  enableAudio();
+
+  const frac=
+    nowHi()%1000;
+
+  const d=
+    frac<500
+    ? frac
+    : frac-1000;
+
+  results.push(d);
+
+  last.textContent=
+    fmt(d);
+
+  const a=
+    Math.abs(d);
+
+  if(a<=30){
+
+    last.style.color=
+      '#63e6be';
+
+  }else if(a<=80){
+
+    last.style.color=
+      '#ffd166';
+
+  }else{
+
+    last.style.color=
+      '#ff9b71';
+  }
+
+  stats();
+}
+
+
+/* 시계 */
+
+function tick(){
+
+  const n=nowHi();
+
+  const d=
+    new Date(n);
+
+  const ms=
+    Math.floor(n%1000);
+
+  clock.textContent=
+
+    String(
+      d.getHours()
+    ).padStart(2,'0')
+
+    +':'+
+
+    String(
+      d.getMinutes()
+    ).padStart(2,'0')
+
+    +':'+
+
+    String(
+      d.getSeconds()
+    ).padStart(2,'0')
+
+    +'.'+
+
+    String(ms)
+      .padStart(3,'0');
+
+
+  fill.style.width=
+    (ms/10)+'%';
+
+
+  /* 새로운 초가 시작되면 틱 */
+
+  const currentSecond=
+    Math.floor(n/1000);
+
+  if(
+    currentSecond
+    !==
+    lastTickSecond
+  ){
+
+    lastTickSecond=
+      currentSecond;
+
+    playTick();
+  }
+
+
+  requestAnimationFrame(tick);
+}
+
+
+/* 아이폰 터치 */
+
+document.addEventListener(
+'touchstart',
+e=>{
+
+  if(
+    e.target.closest('button')
+  ) return;
+
+  e.preventDefault();
+
+  record();
+
+},
+{passive:false}
+);
+
+
+/* PC에서도 동작 */
+
+document.addEventListener(
+'mousedown',
+e=>{
+
+  if(
+    e.target.closest('button')
+  ) return;
+
+  record();
+
+}
+);
+
+
+/* 초기화 */
+
+$('reset').onclick=e=>{
+
+  e.stopPropagation();
+
+  enableAudio();
+
+  results=[];
+
+  last.textContent='—';
+
+  last.style.color=
+    '#63e6be';
+
+  stats();
+};
+
+
+/* 기록 복사 */
+
+$('copy').onclick=async e=>{
+
+  e.stopPropagation();
+
+  enableAudio();
+
+  if(!results.length)
+    return;
+
+  const text=
+    results
+    .map(
+      (v,i)=>
+      (i+1)+'. '+fmt(v)
+    )
+    .join('\\n');
+
+  try{
+
+    await navigator
+      .clipboard
+      .writeText(text);
+
+    alert('복사됨');
+
+  }catch{
+
+    alert(text);
+
+  }
+
+};
+
+
+tick();
+
 })();
 </script>
+
 </body>
 </html>
