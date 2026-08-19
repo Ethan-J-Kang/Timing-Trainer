@@ -1,29 +1,2208 @@
-from pathlib import Path
+<!doctype html>
+<html lang="ko">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,maximum-scale=1,user-scalable=no">
+<title>Millisecond Challenge</title>
 
-p = Path("/mnt/data/index.html")
-html = p.read_text(encoding="utf-8")
+<style>
+:root{
+  --bg:#0f1115;
+  --panel:#181b21;
+  --panel2:#111419;
+  --line:#2b3038;
+  --text:#f4f5f7;
+  --muted:#9098a5;
+  --perfect:#63e6be;
+  --excellent:#64b5f6;
+  --good:#ffd166;
+  --bad:#ff9b71;
+  --miss:#ff5c70;
+}
 
-# Display seconds instead of ms while preserving internal millisecond calculations.
-html = html.replace(
-    "const fmt=v=>(v>=0?'+':'')+v.toFixed(1)+' ms';",
-    "const fmt=v=>(v>=0?'+':'')+(v/1000).toFixed(3)+' s';"
+*{
+  box-sizing:border-box;
+  -webkit-tap-highlight-color:transparent;
+}
+
+html,body{
+  margin:0;
+  min-height:100%;
+  background:var(--bg);
+  color:var(--text);
+  font-family:system-ui,-apple-system,BlinkMacSystemFont,"Segoe UI",sans-serif;
+}
+
+body{
+  touch-action:manipulation;
+  user-select:none;
+  -webkit-user-select:none;
+}
+
+.wrap{
+  max-width:760px;
+  min-height:100vh;
+  margin:0 auto;
+  padding:16px;
+  display:flex;
+  flex-direction:column;
+}
+
+header{
+  display:flex;
+  align-items:center;
+  justify-content:space-between;
+  gap:10px;
+  margin-bottom:12px;
+}
+
+.brand{
+  font-size:20px;
+  font-weight:1000;
+}
+
+.headerBtns{
+  display:flex;
+  gap:8px;
+}
+
+button{
+  border:0;
+  border-radius:12px;
+  background:#2c3139;
+  color:#fff;
+  font-weight:900;
+  padding:12px 14px;
+}
+
+button:active{
+  transform:scale(.98);
+}
+
+.iconBtn{
+  width:40px;
+  height:40px;
+  padding:0;
+  border-radius:12px;
+  font-size:18px;
+}
+
+.iconBtn.on{
+  background:#1e8f73;
+}
+
+.profileBar{
+  display:flex;
+  align-items:center;
+  gap:10px;
+  background:var(--panel);
+  border:1px solid var(--line);
+  border-radius:16px;
+  padding:10px;
+  margin-bottom:12px;
+}
+
+.avatar{
+  width:44px;
+  height:44px;
+  border-radius:50%;
+  object-fit:cover;
+  background:#2b3038;
+  border:1px solid #3b424d;
+}
+
+.profileText{
+  min-width:0;
+  flex:1;
+}
+
+.nick{
+  font-weight:900;
+  white-space:nowrap;
+  overflow:hidden;
+  text-overflow:ellipsis;
+}
+
+.small{
+  color:var(--muted);
+  font-size:12px;
+}
+
+.editProfile{
+  padding:9px 11px;
+  font-size:12px;
+}
+
+.game{
+  flex:1;
+  display:flex;
+  flex-direction:column;
+}
+
+.topStats{
+  display:flex;
+  justify-content:space-between;
+  align-items:center;
+  margin-bottom:8px;
+  font-size:13px;
+  font-weight:900;
+}
+
+.clock{
+  font:900 clamp(38px,12vw,72px) ui-monospace,SFMono-Regular,Consolas,monospace;
+  text-align:center;
+  margin:auto 0 12px;
+  letter-spacing:-.05em;
+}
+
+.bar{
+  height:12px;
+  background:#2b3038;
+  border-radius:999px;
+  overflow:hidden;
+}
+
+.fill{
+  height:100%;
+  width:0;
+  background:linear-gradient(90deg,#4e91ff,#ff56b8);
+}
+
+.judgeArea{
+  text-align:center;
+  min-height:112px;
+  display:flex;
+  flex-direction:column;
+  justify-content:center;
+}
+
+.judge{
+  font-size:36px;
+  font-weight:1000;
+  min-height:44px;
+}
+
+.error{
+  font:900 19px ui-monospace,SFMono-Regular,Consolas,monospace;
+  color:#c9ced6;
+}
+
+.combo{
+  min-height:24px;
+  margin-top:3px;
+  font-size:18px;
+  font-weight:1000;
+}
+
+.card{
+  background:var(--panel);
+  border:1px solid var(--line);
+  border-radius:18px;
+  padding:14px;
+}
+
+.grid{
+  display:grid;
+  grid-template-columns:1fr 1fr;
+  gap:8px;
+}
+
+.stat{
+  background:var(--panel2);
+  border-radius:12px;
+  padding:10px;
+}
+
+.k{
+  color:var(--muted);
+  font-size:12px;
+}
+
+.v{
+  font:800 15px ui-monospace,SFMono-Regular,Consolas,monospace;
+  margin-top:4px;
+}
+
+.hint{
+  text-align:center;
+  color:var(--muted);
+  font-size:11px;
+  margin-top:10px;
+}
+
+.primary{
+  width:100%;
+  margin-top:10px;
+  background:#343a45;
+}
+
+.overlay{
+  position:fixed;
+  inset:0;
+  background:rgba(7,9,13,.9);
+  display:none;
+  align-items:center;
+  justify-content:center;
+  padding:16px;
+  z-index:50;
+  backdrop-filter:blur(10px);
+}
+
+.overlay.show{
+  display:flex;
+}
+
+.modal{
+  width:min(460px,100%);
+  max-height:92vh;
+  overflow:auto;
+  background:#191c22;
+  border:1px solid #313640;
+  border-radius:24px;
+  padding:20px;
+}
+
+.modal h2{
+  margin:0 0 14px;
+}
+
+.field{
+  margin-bottom:12px;
+}
+
+.field label{
+  display:block;
+  color:var(--muted);
+  font-size:12px;
+  margin-bottom:6px;
+}
+
+.field input{
+  width:100%;
+  border:1px solid #363c46;
+  background:#111419;
+  color:#fff;
+  border-radius:12px;
+  padding:12px;
+  font-size:16px;
+}
+
+.avatarPicker{
+  display:flex;
+  align-items:center;
+  gap:12px;
+}
+
+.avatarPicker img{
+  width:72px;
+  height:72px;
+  border-radius:50%;
+  object-fit:cover;
+  background:#2b3038;
+}
+
+.modalBtns{
+  display:flex;
+  gap:8px;
+  margin-top:14px;
+}
+
+.modalBtns button{
+  flex:1;
+}
+
+.grade{
+  text-align:center;
+  font-size:72px;
+  line-height:1;
+  font-weight:1000;
+  margin:8px 0;
+}
+
+.finalScore{
+  text-align:center;
+  font-size:28px;
+  font-weight:1000;
+}
+
+.resultMeta{
+  text-align:center;
+  color:var(--muted);
+  font-size:13px;
+  margin-top:5px;
+}
+
+.breakdown{
+  margin-top:14px;
+  background:#111419;
+  border-radius:14px;
+  padding:12px;
+  line-height:1.8;
+  font-size:14px;
+}
+
+.shareBtn{
+  background:#1f8f73;
+}
+
+.rankTabs{
+  display:grid;
+  grid-template-columns:repeat(3,1fr);
+  gap:6px;
+  margin-bottom:12px;
+}
+
+.rankTab{
+  padding:10px 6px;
+  font-size:13px;
+  background:#252a31;
+}
+
+.rankTab.active{
+  background:#1f8f73;
+}
+
+.rankList{
+  display:flex;
+  flex-direction:column;
+  gap:7px;
+}
+
+.rankRow{
+  display:grid;
+  grid-template-columns:34px 42px 1fr auto;
+  gap:8px;
+  align-items:center;
+  background:#111419;
+  border-radius:13px;
+  padding:9px;
+}
+
+.rankNo{
+  text-align:center;
+  font-weight:1000;
+}
+
+.rankAvatar{
+  width:38px;
+  height:38px;
+  border-radius:50%;
+  object-fit:cover;
+  background:#2b3038;
+}
+
+.rankName{
+  font-weight:900;
+  overflow:hidden;
+  text-overflow:ellipsis;
+  white-space:nowrap;
+}
+
+.rankDate{
+  font-size:11px;
+  color:var(--muted);
+}
+
+.rankScore{
+  text-align:right;
+  font-weight:1000;
+}
+
+.rankGrade{
+  font-size:11px;
+  color:var(--muted);
+}
+
+.me{
+  outline:1px solid #5fe0c0;
+}
+
+.empty{
+  text-align:center;
+  color:var(--muted);
+  padding:28px 10px;
+}
+
+.note{
+  color:var(--muted);
+  font-size:11px;
+  line-height:1.5;
+  margin-top:12px;
+}
+</style>
+</head>
+
+<body>
+
+<div class="wrap">
+
+<header>
+  <div class="brand">MILLISECOND CHALLENGE</div>
+
+  <div class="headerBtns">
+    <button class="iconBtn" id="soundBtn">🔊</button>
+    <button class="iconBtn" id="rankBtn">🏆</button>
+  </div>
+</header>
+
+
+<div class="profileBar">
+
+  <img class="avatar" id="headerAvatar" alt="">
+
+  <div class="profileText">
+    <div class="nick" id="headerNick">GUEST</div>
+    <div class="small">30 TAP · 매초 n.000</div>
+  </div>
+
+  <button class="editProfile" id="profileBtn">
+    프로필
+  </button>
+
+</div>
+
+
+<main class="game">
+
+<div class="topStats">
+  <div id="round">0 / 30</div>
+  <div id="scoreLive">0점</div>
+</div>
+
+
+<div class="clock" id="clock">
+00:00:00.000
+</div>
+
+
+<div class="bar">
+  <div class="fill" id="fill"></div>
+</div>
+
+
+<div class="judgeArea">
+
+  <div class="judge" id="judge">
+    READY
+  </div>
+
+  <div class="error" id="error">
+    화면을 탭해서 시작
+  </div>
+
+  <div class="combo" id="combo"></div>
+
+</div>
+
+
+<div class="card">
+
+<div class="grid">
+
+<div class="stat">
+  <div class="k">평균 절대오차</div>
+  <div class="v" id="mae">—</div>
+</div>
+
+<div class="stat">
+  <div class="k">평균 편향</div>
+  <div class="v" id="bias">—</div>
+</div>
+
+<div class="stat">
+  <div class="k">현재 콤보</div>
+  <div class="v" id="comboStat">0</div>
+</div>
+
+<div class="stat">
+  <div class="k">최고 콤보</div>
+  <div class="v" id="maxCombo">0</div>
+</div>
+
+</div>
+
+<button class="primary" id="reset">
+새 게임
+</button>
+
+<div class="hint">
+Perfect ±0.015 s · Excellent ±0.030 s · Good ±0.060 s · Bad ±0.120 s
+</div>
+
+</div>
+
+</main>
+</div>
+
+
+<!-- 프로필 -->
+
+<div class="overlay" id="profileOverlay">
+
+<div class="modal">
+
+<h2>프로필</h2>
+
+<div class="avatarPicker">
+
+<img id="previewAvatar" alt="">
+
+<div style="flex:1">
+
+<div class="field">
+<label>닉네임</label>
+<input
+  id="nicknameInput"
+  maxlength="18"
+  placeholder="닉네임">
+</div>
+
+<div class="field">
+<label>프로필 사진</label>
+<input
+  id="avatarInput"
+  type="file"
+  accept="image/*">
+</div>
+
+</div>
+</div>
+
+<div class="modalBtns">
+<button id="profileCancel">취소</button>
+<button id="profileSave" class="shareBtn">저장</button>
+</div>
+
+</div>
+</div>
+
+
+<!-- 결과 -->
+
+<div class="overlay" id="resultOverlay">
+
+<div class="modal">
+
+<div class="small" style="text-align:center">
+30 TAP RESULT
+</div>
+
+<div class="grade" id="finalGrade">
+A++
+</div>
+
+<div class="finalScore">
+<span id="finalScore">0</span> / 3000
+</div>
+
+<div class="resultMeta" id="resultMeta"></div>
+
+
+<div class="grid" style="margin-top:14px">
+
+<div class="stat">
+<div class="k">평균 절대오차</div>
+<div class="v" id="resultMae">—</div>
+</div>
+
+<div class="stat">
+<div class="k">최고 콤보</div>
+<div class="v" id="resultCombo">0</div>
+</div>
+
+</div>
+
+
+<div class="breakdown" id="breakdown"></div>
+
+
+<div class="modalBtns">
+<button id="restart">다시 하기</button>
+<button id="share" class="shareBtn">점수판 공유</button>
+</div>
+
+<button
+  style="width:100%;margin-top:8px"
+  id="resultRank">
+랭킹 보기
+</button>
+
+</div>
+</div>
+
+
+<!-- 랭킹 -->
+
+<div class="overlay" id="rankOverlay">
+
+<div class="modal">
+
+<div style="display:flex;justify-content:space-between;align-items:center;gap:10px">
+
+<h2 style="margin:0">
+🏆 RANKING
+</h2>
+
+<button id="rankClose" style="padding:9px 12px">
+닫기
+</button>
+
+</div>
+
+
+<div class="rankTabs" style="margin-top:14px">
+
+<button class="rankTab active" data-mode="all">
+역대
+</button>
+
+<button class="rankTab" data-mode="week">
+이번 주
+</button>
+
+<button class="rankTab" data-mode="today">
+오늘
+</button>
+
+</div>
+
+<div class="rankList" id="rankList"></div>
+
+<div class="note">
+현재 버전은 이 기기에 저장된 기록을 표시합니다.
+공용 온라인 랭킹은 DB 연결 후 활성화할 수 있습니다.
+</div>
+
+</div>
+</div>
+
+
+<script>
+(()=>{
+
+const $ =
+id =>
+document.getElementById(id);
+
+
+const MAX_TRIES = 30;
+
+const STORAGE_PROFILE =
+'msc_profile_v2';
+
+const STORAGE_SCORES =
+'msc_scores_v2';
+
+
+let profile = {
+  nickname:'GUEST',
+  avatar:''
+};
+
+
+let results = [];
+
+let totalScore = 0;
+
+let currentCombo = 0;
+
+let maxCombo = 0;
+
+
+let counts = {
+  Perfect:0,
+  Excellent:0,
+  Good:0,
+  Bad:0,
+  Miss:0
+};
+
+
+let audioCtx = null;
+
+let soundEnabled = false;
+
+let tickTimer = null;
+
+let rankMode = 'all';
+
+
+const clock = $('clock');
+
+const fill = $('fill');
+
+const round = $('round');
+
+const scoreLive = $('scoreLive');
+
+const judge = $('judge');
+
+const error = $('error');
+
+const comboText = $('combo');
+
+const mae = $('mae');
+
+const bias = $('bias');
+
+const comboStat = $('comboStat');
+
+const maxComboStat = $('maxCombo');
+
+const resultOverlay =
+$('resultOverlay');
+
+const rankOverlay =
+$('rankOverlay');
+
+const profileOverlay =
+$('profileOverlay');
+
+
+const nowHi = () =>
+performance.timeOrigin +
+performance.now();
+
+
+/* 표시 단위 = 초 */
+
+const fmt = v =>
+(v >= 0 ? '+' : '') +
+(v / 1000).toFixed(3) +
+' s';
+
+
+const defaultAvatar = () =>
+
+`data:image/svg+xml;charset=utf-8,${
+encodeURIComponent(
+'<svg xmlns="http://www.w3.org/2000/svg" width="100" height="100"><rect width="100%" height="100%" fill="#2b3038"/><circle cx="50" cy="38" r="18" fill="#7d8796"/><path d="M18 92c3-23 18-34 32-34s29 11 32 34" fill="#7d8796"/></svg>'
 )
-html = html.replace(
-    "Perfect ±15ms · Excellent ±30ms · Good ±60ms · Bad ±120ms",
-    "Perfect ±0.015 s · Excellent ±0.030 s · Good ±0.060 s · Bad ±0.120 s"
+}`;
+
+
+/* 프로필 */
+
+function loadProfile(){
+
+try{
+
+profile =
+JSON.parse(
+localStorage.getItem(
+STORAGE_PROFILE
 )
-html = html.replace(
-    "mae.textContent=m.toFixed(1)+' ms';bias.textContent=fmt(b);",
-    "mae.textContent=(m/1000).toFixed(3)+' s';bias.textContent=fmt(b);"
+) || profile;
+
+}catch{}
+
+
+if(!profile.nickname){
+
+profile.nickname =
+'GUEST';
+
+}
+
+updateProfileUI();
+
+}
+
+
+function saveProfile(){
+
+localStorage.setItem(
+STORAGE_PROFILE,
+JSON.stringify(profile)
+);
+
+updateProfileUI();
+
+}
+
+
+function updateProfileUI(){
+
+$('headerNick').textContent =
+profile.nickname;
+
+$('headerAvatar').src =
+profile.avatar ||
+defaultAvatar();
+
+$('previewAvatar').src =
+profile.avatar ||
+defaultAvatar();
+
+}
+
+
+/* 로컬 점수 */
+
+function loadScores(){
+
+try{
+
+return JSON.parse(
+localStorage.getItem(
+STORAGE_SCORES
 )
-html = html.replace(
-    "$('resultMae').textContent=avgAbs.toFixed(1)+' ms';",
-    "$('resultMae').textContent=(avgAbs/1000).toFixed(3)+' s';"
+) || [];
+
+}catch{
+
+return [];
+
+}
+
+}
+
+
+function saveScoreRecord(record){
+
+const arr =
+loadScores();
+
+arr.push(record);
+
+localStorage.setItem(
+STORAGE_SCORES,
+JSON.stringify(
+arr.slice(-500)
 )
-html = html.replace(
-    "평균오차 ${avgAbs.toFixed(1)} ms",
-    "평균오차 ${(avgAbs/1000).toFixed(3)} s"
+);
+
+}
+
+
+/* 판정 */
+
+function getJudgement(abs){
+
+if(abs <= 15){
+
+return {
+name:'Perfect',
+score:100,
+color:'#63e6be'
+};
+
+}
+
+if(abs <= 30){
+
+return {
+name:'Excellent',
+score:85,
+color:'#64b5f6'
+};
+
+}
+
+if(abs <= 60){
+
+return {
+name:'Good',
+score:60,
+color:'#ffd166'
+};
+
+}
+
+if(abs <= 120){
+
+return {
+name:'Bad',
+score:30,
+color:'#ff9b71'
+};
+
+}
+
+return {
+name:'Miss',
+score:0,
+color:'#ff5c70'
+};
+
+}
+
+
+/* 등급 */
+
+function getGrade(percent){
+
+if(percent >= 95)
+return 'A++';
+
+if(percent >= 90)
+return 'A+';
+
+if(percent >= 85)
+return 'A';
+
+if(percent >= 80)
+return 'B+';
+
+if(percent >= 70)
+return 'B';
+
+if(percent >= 60)
+return 'C';
+
+if(percent >= 50)
+return 'D';
+
+return 'F';
+
+}
+
+
+/* 틱 소리 */
+
+function playTick(){
+
+if(
+!audioCtx ||
+audioCtx.state !== 'running'
+){
+return;
+}
+
+const osc =
+audioCtx.createOscillator();
+
+const gain =
+audioCtx.createGain();
+
+const t =
+audioCtx.currentTime;
+
+osc.type =
+'square';
+
+osc.frequency.value =
+1300;
+
+gain.gain.setValueAtTime(
+0.14,
+t
+);
+
+gain.gain.exponentialRampToValueAtTime(
+0.001,
+t + 0.025
+);
+
+osc.connect(gain);
+
+gain.connect(
+audioCtx.destination
+);
+
+osc.start(t);
+
+osc.stop(
+t + 0.03
+);
+
+}
+
+
+async function startSound(){
+
+if(!audioCtx){
+
+audioCtx =
+new (
+window.AudioContext ||
+window.webkitAudioContext
+)();
+
+}
+
+await audioCtx.resume();
+
+playTick();
+
+soundEnabled =
+true;
+
+$('soundBtn')
+.classList
+.add('on');
+
+scheduleNextTick();
+
+}
+
+
+function stopSound(){
+
+soundEnabled =
+false;
+
+clearTimeout(
+tickTimer
+);
+
+$('soundBtn')
+.classList
+.remove('on');
+
+}
+
+
+function scheduleNextTick(){
+
+clearTimeout(
+tickTimer
+);
+
+if(!soundEnabled){
+return;
+}
+
+const now =
+Date.now();
+
+const delay =
+1000 -
+(now % 1000);
+
+tickTimer =
+setTimeout(
+()=>{
+
+playTick();
+
+scheduleNextTick();
+
+},
+delay
+);
+
+}
+
+
+/* 실시간 통계 */
+
+function updateStats(){
+
+round.textContent =
+results.length +
+' / ' +
+MAX_TRIES;
+
+scoreLive.textContent =
+totalScore +
+'점';
+
+comboStat.textContent =
+currentCombo;
+
+maxComboStat.textContent =
+maxCombo;
+
+
+if(!results.length){
+
+mae.textContent =
+'—';
+
+bias.textContent =
+'—';
+
+return;
+
+}
+
+
+const m =
+results.reduce(
+(a,v) =>
+a + Math.abs(v),
+0
+) /
+results.length;
+
+
+const b =
+results.reduce(
+(a,v) =>
+a + v,
+0
+) /
+results.length;
+
+
+mae.textContent =
+(m / 1000)
+.toFixed(3) +
+' s';
+
+
+bias.textContent =
+fmt(b);
+
+}
+
+
+/* 탭 */
+
+function record(){
+
+if(
+results.length >=
+MAX_TRIES
+){
+return;
+}
+
+
+const frac =
+nowHi() %
+1000;
+
+
+const delta =
+frac < 500
+? frac
+: frac - 1000;
+
+
+const abs =
+Math.abs(delta);
+
+
+const j =
+getJudgement(abs);
+
+
+results.push(delta);
+
+counts[j.name]++;
+
+totalScore +=
+j.score;
+
+
+judge.textContent =
+j.name;
+
+judge.style.color =
+j.color;
+
+error.textContent =
+fmt(delta);
+
+
+/* Excellent 이상 콤보 */
+
+if(
+j.name === 'Perfect' ||
+j.name === 'Excellent'
+){
+
+currentCombo++;
+
+if(
+currentCombo >
+maxCombo
+){
+
+maxCombo =
+currentCombo;
+
+}
+
+}else{
+
+currentCombo =
+0;
+
+}
+
+
+comboText.textContent =
+currentCombo >= 2
+? currentCombo + ' COMBO'
+: '';
+
+
+updateStats();
+
+
+if(
+results.length ===
+MAX_TRIES
+){
+
+setTimeout(
+showResult,
+300
+);
+
+}
+
+}
+
+
+/* 결과 */
+
+function showResult(){
+
+const percent =
+totalScore /
+3000 *
+100;
+
+
+const grade =
+getGrade(
+percent
+);
+
+
+const avgAbs =
+results.reduce(
+(a,v) =>
+a + Math.abs(v),
+0
+) /
+results.length;
+
+
+const now =
+new Date();
+
+
+const rec = {
+
+id:
+Date.now() +
+'-' +
+Math.random(),
+
+nickname:
+profile.nickname,
+
+avatar:
+profile.avatar || '',
+
+score:
+totalScore,
+
+grade:
+grade,
+
+avg_error:
++avgAbs.toFixed(2),
+
+max_combo:
+maxCombo,
+
+perfect:
+counts.Perfect,
+
+excellent:
+counts.Excellent,
+
+good:
+counts.Good,
+
+bad:
+counts.Bad,
+
+miss:
+counts.Miss,
+
+played_at:
+now.toISOString()
+
+};
+
+
+saveScoreRecord(
+rec
+);
+
+
+$('finalGrade')
+.textContent =
+grade;
+
+
+$('finalScore')
+.textContent =
+totalScore;
+
+
+$('resultMeta')
+.textContent =
+
+profile.nickname +
+' · ' +
+now.toLocaleString(
+'ko-KR'
+);
+
+
+$('resultMae')
+.textContent =
+
+(avgAbs / 1000)
+.toFixed(3) +
+' s';
+
+
+$('resultCombo')
+.textContent =
+maxCombo;
+
+
+$('breakdown')
+.innerHTML =
+
+'<span style="color:#63e6be">Perfect</span> ' +
+counts.Perfect +
+'<br>' +
+
+'<span style="color:#64b5f6">Excellent</span> ' +
+counts.Excellent +
+'<br>' +
+
+'<span style="color:#ffd166">Good</span> ' +
+counts.Good +
+'<br>' +
+
+'<span style="color:#ff9b71">Bad</span> ' +
+counts.Bad +
+'<br>' +
+
+'<span style="color:#ff5c70">Miss</span> ' +
+counts.Miss;
+
+
+resultOverlay
+.classList
+.add('show');
+
+}
+
+
+/* 게임 초기화 */
+
+function resetGame(){
+
+results = [];
+
+totalScore = 0;
+
+currentCombo = 0;
+
+maxCombo = 0;
+
+
+counts = {
+Perfect:0,
+Excellent:0,
+Good:0,
+Bad:0,
+Miss:0
+};
+
+
+judge.textContent =
+'READY';
+
+judge.style.color =
+'#f4f5f7';
+
+error.textContent =
+'화면을 탭해서 시작';
+
+comboText.textContent =
+'';
+
+
+resultOverlay
+.classList
+.remove('show');
+
+
+updateStats();
+
+}
+
+
+/* 날짜 */
+
+function startOfToday(){
+
+const d =
+new Date();
+
+d.setHours(
+0,0,0,0
+);
+
+return d;
+
+}
+
+
+function startOfWeek(){
+
+const d =
+new Date();
+
+d.setHours(
+0,0,0,0
+);
+
+const day =
+(d.getDay()+6)%7;
+
+d.setDate(
+d.getDate()-day
+);
+
+return d;
+
+}
+
+
+/* 같은 닉네임 최고기록 */
+
+function bestPerNickname(records){
+
+const map =
+new Map();
+
+
+for(
+const r of records
+){
+
+const key =
+(r.nickname || 'GUEST')
+.trim()
+.toLowerCase();
+
+
+const old =
+map.get(key);
+
+
+if(
+!old ||
+r.score > old.score ||
+(
+r.score === old.score &&
+r.avg_error < old.avg_error
+)
+){
+
+map.set(
+key,
+r
+);
+
+}
+
+}
+
+
+return [
+...map.values()
+];
+
+}
+
+
+/* 랭킹 */
+
+function renderRank(){
+
+let arr =
+loadScores();
+
+
+const cutoff =
+
+rankMode === 'today'
+? startOfToday()
+
+: rankMode === 'week'
+? startOfWeek()
+
+: null;
+
+
+if(cutoff){
+
+arr =
+arr.filter(
+r =>
+new Date(
+r.played_at
+) >= cutoff
+);
+
+}
+
+
+arr =
+bestPerNickname(arr)
+.sort(
+(a,b) =>
+
+b.score - a.score ||
+
+a.avg_error -
+b.avg_error ||
+
+b.perfect -
+a.perfect ||
+
+b.max_combo -
+a.max_combo ||
+
+new Date(a.played_at) -
+new Date(b.played_at)
+
+);
+
+
+const list =
+$('rankList');
+
+list.innerHTML =
+'';
+
+
+if(!arr.length){
+
+list.innerHTML =
+'<div class="empty">아직 기록이 없습니다.</div>';
+
+return;
+
+}
+
+
+arr.slice(0,100)
+.forEach(
+(r,i)=>{
+
+const row =
+document.createElement(
+'div'
+);
+
+
+row.className =
+'rankRow' +
+
+(
+(r.nickname || '')
+.toLowerCase()
+===
+profile.nickname
+.toLowerCase()
+
+? ' me'
+: ''
+);
+
+
+const date =
+new Date(
+r.played_at
+);
+
+
+row.innerHTML =
+
+'<div class="rankNo">' +
+(i+1) +
+'</div>' +
+
+'<img class="rankAvatar" src="' +
+(r.avatar || defaultAvatar()) +
+'" alt="">' +
+
+'<div>' +
+
+'<div class="rankName">' +
+escapeHtml(
+r.nickname ||
+'GUEST'
+) +
+'</div>' +
+
+'<div class="rankDate">' +
+
+date.toLocaleDateString(
+'ko-KR'
+) +
+
+' ' +
+
+date.toLocaleTimeString(
+'ko-KR',
+{
+hour:'2-digit',
+minute:'2-digit'
+}
+) +
+
+'</div>' +
+
+'</div>' +
+
+'<div class="rankScore">' +
+
+r.score +
+
+'<div class="rankGrade">' +
+r.grade +
+'</div>' +
+
+'</div>';
+
+
+list.appendChild(
+row
+);
+
+}
+);
+
+}
+
+
+function escapeHtml(s){
+
+return String(s)
+.replace(
+/[&<>"']/g,
+m => ({
+'&':'&amp;',
+'<':'&lt;',
+'>':'&gt;',
+'"':'&quot;',
+"'":'&#039;'
+}[m])
+);
+
+}
+
+
+/* 공유 */
+
+async function shareScore(){
+
+if(!results.length){
+return;
+}
+
+
+const percent =
+totalScore /
+3000 *
+100;
+
+
+const grade =
+getGrade(
+percent
+);
+
+
+const avgAbs =
+results.reduce(
+(a,v) =>
+a + Math.abs(v),
+0
+) /
+results.length;
+
+
+const text =
+
+`⏱️ MILLISECOND CHALLENGE
+
+${profile.nickname}
+
+등급 ${grade}
+${totalScore} / 3000
+
+평균오차 ${(avgAbs/1000).toFixed(3)} s
+최고콤보 ${maxCombo}
+
+Perfect ${counts.Perfect}
+Excellent ${counts.Excellent}
+Good ${counts.Good}
+Bad ${counts.Bad}
+Miss ${counts.Miss}`;
+
+
+try{
+
+if(
+navigator.share
+){
+
+await navigator.share({
+title:
+'Millisecond Challenge',
+text:text
+});
+
+return;
+
+}
+
+
+await navigator
+.clipboard
+.writeText(text);
+
+
+alert(
+'점수판을 복사했습니다.'
+);
+
+
+}catch{}
+
+}
+
+
+/* 시계 */
+
+function updateClock(){
+
+const n =
+nowHi();
+
+
+const d =
+new Date(n);
+
+
+const ms =
+Math.floor(
+n % 1000
+);
+
+
+clock.textContent =
+
+String(
+d.getHours()
+).padStart(2,'0')
+
++ ':' +
+
+String(
+d.getMinutes()
+).padStart(2,'0')
+
++ ':' +
+
+String(
+d.getSeconds()
+).padStart(2,'0')
+
++ '.' +
+
+String(ms)
+.padStart(3,'0');
+
+
+fill.style.width =
+(ms / 10) +
+'%';
+
+
+requestAnimationFrame(
+updateClock
+);
+
+}
+
+
+/* 프로필 버튼 */
+
+$('profileBtn')
+.onclick =
+e=>{
+
+e.stopPropagation();
+
+$('nicknameInput')
+.value =
+
+profile.nickname ===
+'GUEST'
+
+? ''
+
+: profile.nickname;
+
+
+$('previewAvatar')
+.src =
+
+profile.avatar ||
+defaultAvatar();
+
+
+profileOverlay
+.classList
+.add('show');
+
+};
+
+
+$('profileCancel')
+.onclick =
+e=>{
+
+e.stopPropagation();
+
+profileOverlay
+.classList
+.remove('show');
+
+};
+
+
+/* 사진 선택 */
+
+$('avatarInput')
+.addEventListener(
+'change',
+e=>{
+
+const file =
+e.target.files?.[0];
+
+if(!file){
+return;
+}
+
+
+if(
+file.size >
+3 * 1024 * 1024
+){
+
+alert(
+'사진은 3MB 이하로 선택해주세요.'
+);
+
+return;
+
+}
+
+
+const reader =
+new FileReader();
+
+
+reader.onload =
+()=>{
+
+$('previewAvatar')
+.src =
+reader.result;
+
+};
+
+
+reader.readAsDataURL(
+file
+);
+
+}
+);
+
+
+/* 프로필 저장 */
+
+$('profileSave')
+.onclick =
+e=>{
+
+e.stopPropagation();
+
+
+const nickname =
+$('nicknameInput')
+.value
+.trim();
+
+
+profile.nickname =
+nickname ||
+'GUEST';
+
+
+const src =
+$('previewAvatar')
+.src;
+
+
+profile.avatar =
+
+src.startsWith(
+'data:image/svg+xml'
 )
 
-p.write_text(html, encoding="utf-8")
-print(p)
+? ''
+
+: src;
+
+
+saveProfile();
+
+
+profileOverlay
+.classList
+.remove('show');
+
+};
+
+
+/* 랭킹 */
+
+$('rankBtn')
+.onclick =
+e=>{
+
+e.stopPropagation();
+
+rankOverlay
+.classList
+.add('show');
+
+renderRank();
+
+};
+
+
+$('rankClose')
+.onclick =
+e=>{
+
+e.stopPropagation();
+
+rankOverlay
+.classList
+.remove('show');
+
+};
+
+
+document
+.querySelectorAll(
+'.rankTab'
+)
+.forEach(
+btn=>{
+
+btn.onclick =
+e=>{
+
+e.stopPropagation();
+
+
+document
+.querySelectorAll(
+'.rankTab'
+)
+.forEach(
+x =>
+x.classList.remove(
+'active'
+)
+);
+
+
+btn.classList
+.add('active');
+
+
+rankMode =
+btn.dataset.mode;
+
+
+renderRank();
+
+};
+
+}
+);
+
+
+$('resultRank')
+.onclick =
+e=>{
+
+e.stopPropagation();
+
+resultOverlay
+.classList
+.remove('show');
+
+rankOverlay
+.classList
+.add('show');
+
+renderRank();
+
+};
+
+
+/* 소리 */
+
+$('soundBtn')
+.onclick =
+async e=>{
+
+e.stopPropagation();
+
+
+if(soundEnabled){
+
+stopSound();
+
+}else{
+
+try{
+
+await startSound();
+
+}catch{}
+
+}
+
+};
+
+
+/* 화면 탭 */
+
+document
+.addEventListener(
+'pointerdown',
+e=>{
+
+if(
+e.target.closest(
+'button'
+) ||
+e.target.closest(
+'input'
+)
+){
+
+return;
+
+}
+
+
+if(
+profileOverlay
+.classList
+.contains('show') ||
+
+rankOverlay
+.classList
+.contains('show') ||
+
+resultOverlay
+.classList
+.contains('show')
+){
+
+return;
+
+}
+
+
+record();
+
+}
+);
+
+
+/* 새 게임 */
+
+$('reset')
+.onclick =
+e=>{
+
+e.stopPropagation();
+
+resetGame();
+
+};
+
+
+$('restart')
+.onclick =
+e=>{
+
+e.stopPropagation();
+
+resetGame();
+
+};
+
+
+/* 공유 */
+
+$('share')
+.onclick =
+e=>{
+
+e.stopPropagation();
+
+shareScore();
+
+};
+
+
+/* 시작 */
+
+loadProfile();
+
+updateStats();
+
+updateClock();
+
+
+if(
+!localStorage.getItem(
+STORAGE_PROFILE
+)
+){
+
+setTimeout(
+() =>
+$('profileBtn')
+.click(),
+250
+);
+
+}
+
+})();
+</script>
+
+</body>
+</html>
