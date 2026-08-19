@@ -59,7 +59,7 @@ button:active{transform:scale(.98)}
 .resultHero{display:flex;flex-direction:column;align-items:center;text-align:center}
 .resultAvatarWrap{position:relative;margin-top:4px}
 .resultAvatar{width:108px;height:108px;border-radius:50%;object-fit:cover;background:#2b3038;border:3px solid #3d444f;box-shadow:0 10px 30px rgba(0,0,0,.35)}
-.gradeBadge{position:absolute;right:-14px;bottom:-10px;min-width:58px;height:58px;padding:0 8px;border-radius:18px;background:#111419;border:2px solid #fff;display:flex;align-items:center;justify-content:center;font-size:25px;font-weight:1000;box-shadow:0 8px 22px rgba(0,0,0,.4)}
+.gradeBadge{position:absolute;right:-14px;bottom:-10px;min-width:58px;height:58px;padding:0 8px;border-radius:18px;background:#111419;border:2px solid #fff;display:flex;align-items:center;justify-content:center;font-size:21px;font-weight:1000;box-shadow:0 8px 22px rgba(0,0,0,.4)}
 .resultNick{font-size:19px;font-weight:1000;margin-top:16px}
 .finalScore{font-size:30px;font-weight:1000;margin-top:4px}
 .resultMeta{color:var(--muted);font-size:13px;margin-top:4px}
@@ -107,7 +107,7 @@ button:active{transform:scale(.98)}
   <img class="avatar" id="headerAvatar" alt="">
   <div class="profileText">
     <div class="nick" id="headerNick">GUEST</div>
-    <div class="small">60 SECOND TIME ATTACK</div>
+    <div class="small">60 SECOND · 60 TAP CHALLENGE</div>
   </div>
   <button class="editProfile" id="profileBtn">프로필</button>
 </div>
@@ -136,7 +136,10 @@ button:active{transform:scale(.98)}
       <div class="stat"><div class="k">최고 콤보</div><div class="v" id="maxCombo">0</div></div>
     </div>
     <button class="primary" id="reset">RESET</button>
-    <div class="hint">Perfect ±0.015 s · Excellent ±0.030 s · Good ±0.060 s · Bad ±0.120 s</div>
+    <div class="hint">
+Perfect ±0.015 s · Excellent ±0.030 s · Good ±0.060 s · Bad ±0.120 s<br>
+Excellent 이상 콤보 보너스 · 60 PERFECT COMBO = SS+++
+</div>
   </div>
 </main>
 </div>
@@ -175,7 +178,7 @@ button:active{transform:scale(.98)}
         <div class="gradeBadge" id="finalGrade">A++</div>
       </div>
       <div class="resultNick" id="resultNick">GUEST</div>
-      <div class="finalScore"><span id="finalScore">0</span> pts</div>
+      <div class="finalScore"><span id="finalScore">0</span> / <span id="maxScoreLabel">0</span> pts</div>
       <div class="resultMeta" id="resultMeta"></div>
     </div>
 
@@ -227,6 +230,8 @@ button:active{transform:scale(.98)}
 const $=id=>document.getElementById(id);
 
 const GAME_MS=60000;
+const MAX_TAPS=60;
+const MAX_COMBO_BONUS=30;
 const STORAGE_PROFILE='msc_profile_60_v1';
 const STORAGE_SCORES='msc_scores_60_v1';
 
@@ -241,7 +246,8 @@ let endTimer=null;
 let lastResultRecord=null;
 
 let audioCtx=null;
-let soundEnabled=false;
+let soundEnabled=true;
+let audioUnlocked=false;
 let tickTimer=null;
 let rankMode='all';
 
@@ -287,14 +293,29 @@ function getJudgement(abs){
   return{name:'Miss',score:0,color:'#ff5c70'};
 }
 
-function getGrade(scorePerTap){
-  if(scorePerTap>=95)return'A++';
-  if(scorePerTap>=90)return'A+';
-  if(scorePerTap>=85)return'A';
-  if(scorePerTap>=80)return'B+';
-  if(scorePerTap>=70)return'B';
-  if(scorePerTap>=60)return'C';
-  if(scorePerTap>=50)return'D';
+function maxPossibleScore(){
+  let bonus=0;
+  for(let c=1;c<=MAX_TAPS;c++){
+    if(c>=2) bonus+=Math.min((c-1)*2,MAX_COMBO_BONUS);
+  }
+  return MAX_TAPS*100+bonus;
+}
+
+function getGrade(score){
+  const pct=score/maxPossibleScore()*100;
+
+  if(pct>=99.0)return'SS+++';
+  if(pct>=97.0)return'SS++';
+  if(pct>=95.0)return'SS+';
+  if(pct>=92.0)return'SS';
+  if(pct>=88.0)return'S+';
+  if(pct>=84.0)return'S';
+  if(pct>=78.0)return'A+';
+  if(pct>=72.0)return'A';
+  if(pct>=65.0)return'B+';
+  if(pct>=58.0)return'B';
+  if(pct>=50.0)return'C';
+  if(pct>=40.0)return'D';
   return'F';
 }
 
@@ -309,29 +330,103 @@ function playTone(freq=1300,duration=.03,volume=.14,type='square',delay=0){
   o.start(t);o.stop(t+duration+.01);
 }
 
-function playTick(){playTone(1300,.025,.12,'square')}
+function playTick(){
+  if(!soundEnabled)return;
+  playTone(1300,.025,.11,'square');
+}
+
 function playFanfare(){
-  if(!audioCtx||audioCtx.state!=='running')return;
-  [523,659,784,1047].forEach((f,i)=>playTone(f,.16,.12,'triangle',i*.11));
-  [784,988,1175].forEach((f,i)=>playTone(f,.24,.10,'sine',.48+i*.06));
+  if(!audioCtx||audioCtx.state!=='running'||!soundEnabled)return;
+  [523,659,784,1047].forEach((f,i)=>playTone(f,.16,.12,'triangle',i*.10));
+  [784,988,1175,1568].forEach((f,i)=>playTone(f,.24,.09,'sine',.44+i*.055));
+}
+
+function playCheer(){
+  if(!audioCtx||audioCtx.state!=='running'||!soundEnabled)return;
+
+  const dur=1.55;
+  const sr=audioCtx.sampleRate;
+  const buffer=audioCtx.createBuffer(1,Math.floor(sr*dur),sr);
+  const data=buffer.getChannelData(0);
+
+  for(let i=0;i<data.length;i++){
+    const t=i/sr;
+    const attack=Math.min(1,t/0.07);
+    const decay=Math.max(0,1-t/dur);
+    const flutter=0.72+0.28*Math.sin(2*Math.PI*(7.5+2*Math.sin(t*4))*t);
+    data[i]=(Math.random()*2-1)*attack*Math.pow(decay,.45)*flutter;
+  }
+
+  const src=audioCtx.createBufferSource();
+  src.buffer=buffer;
+
+  const band=audioCtx.createBiquadFilter();
+  band.type='bandpass';
+  band.frequency.value=1150;
+  band.Q.value=.65;
+
+  const gain=audioCtx.createGain();
+  const now=audioCtx.currentTime+.08;
+  gain.gain.setValueAtTime(.0001,now);
+  gain.gain.exponentialRampToValueAtTime(.20,now+.08);
+  gain.gain.exponentialRampToValueAtTime(.055,now+1.20);
+  gain.gain.exponentialRampToValueAtTime(.0001,now+dur);
+
+  src.connect(band);
+  band.connect(gain);
+  gain.connect(audioCtx.destination);
+  src.start(now);
+  src.stop(now+dur);
+
+  // crowd-like rising voices
+  [360,430,520,610,720].forEach((f,i)=>{
+    const o=audioCtx.createOscillator();
+    const g=audioCtx.createGain();
+    const t0=now+.02+i*.035;
+    o.type='sawtooth';
+    o.frequency.setValueAtTime(f,t0);
+    o.frequency.exponentialRampToValueAtTime(f*1.35,t0+.55);
+    g.gain.setValueAtTime(.0001,t0);
+    g.gain.exponentialRampToValueAtTime(.018,t0+.05);
+    g.gain.exponentialRampToValueAtTime(.0001,t0+.75);
+    o.connect(g);g.connect(audioCtx.destination);
+    o.start(t0);o.stop(t0+.78);
+  });
+}
+
+async function ensureAudio(){
+  if(!soundEnabled)return;
+  if(!audioCtx) audioCtx=new(window.AudioContext||window.webkitAudioContext)();
+  if(audioCtx.state==='suspended') await audioCtx.resume();
+
+  if(!audioUnlocked){
+    audioUnlocked=true;
+    // silent unlock pulse inside a user gesture
+    const g=audioCtx.createGain();
+    const o=audioCtx.createOscillator();
+    g.gain.value=.00001;
+    o.connect(g);g.connect(audioCtx.destination);
+    o.start();o.stop(audioCtx.currentTime+.01);
+    $('soundBtn').classList.add('on');
+    scheduleNextTick();
+  }
 }
 
 async function startSound(){
-  if(!audioCtx)audioCtx=new(window.AudioContext||window.webkitAudioContext)();
-  await audioCtx.resume();
-  playTick();
   soundEnabled=true;
+  await ensureAudio();
   $('soundBtn').classList.add('on');
-  scheduleNextTick();
 }
+
 function stopSound(){
   soundEnabled=false;
   clearTimeout(tickTimer);
   $('soundBtn').classList.remove('on');
 }
+
 function scheduleNextTick(){
   clearTimeout(tickTimer);
-  if(!soundEnabled)return;
+  if(!soundEnabled||!audioUnlocked)return;
   const delay=1000-(Date.now()%1000);
   tickTimer=setTimeout(()=>{playTick();scheduleNextTick()},delay);
 }
@@ -345,7 +440,7 @@ function startGame(){
 }
 
 function updateStats(){
-  tapCount.textContent=results.length+' TAP';
+  tapCount.textContent=results.length+' / '+MAX_TAPS+' TAP';
   scoreLive.textContent=totalScore+'점';
   comboStat.textContent=currentCombo;
   maxComboStat.textContent=maxCombo;
@@ -362,6 +457,7 @@ function updateStats(){
 
 function record(){
   if(gameEnded)return;
+  if(results.length>=MAX_TAPS){endGame();return}
   if(!gameStarted)startGame();
 
   const elapsed=performance.now()-startPerf;
@@ -373,21 +469,34 @@ function record(){
 
   results.push(delta);
   counts[j.name]++;
-  totalScore+=j.score;
 
-  judge.textContent=j.name;
-  judge.style.color=j.color;
-  error.textContent=fmt(delta);
+  let comboBonus=0;
 
   if(j.name==='Perfect'||j.name==='Excellent'){
     currentCombo++;
     if(currentCombo>maxCombo)maxCombo=currentCombo;
+
+    if(currentCombo>=2){
+      comboBonus=Math.min((currentCombo-1)*2,MAX_COMBO_BONUS);
+    }
   }else{
     currentCombo=0;
   }
 
+  totalScore+=j.score+comboBonus;
+
+  judge.textContent=j.name;
+  judge.style.color=j.color;
+  error.textContent=comboBonus>0
+    ? `${fmt(delta)}  +${comboBonus} COMBO BONUS`
+    : fmt(delta);
+
   comboText.textContent=currentCombo>=2?currentCombo+' COMBO':'';
   updateStats();
+
+  if(results.length>=MAX_TAPS){
+    setTimeout(endGame,160);
+  }
 }
 
 function endGame(){
@@ -398,8 +507,7 @@ function endGame(){
   timerEl.textContent='0.0';
 
   const taps=results.length;
-  const scorePerTap=taps?totalScore/taps:0;
-  const grade=getGrade(scorePerTap);
+  const grade=getGrade(totalScore);
   const avgAbs=taps?results.reduce((a,v)=>a+Math.abs(v),0)/taps:0;
   const now=new Date();
 
@@ -426,7 +534,9 @@ function endGame(){
   $('finalGrade').textContent=grade;
   $('resultNick').textContent=profile.nickname;
   $('finalScore').textContent=totalScore;
-  $('resultMeta').textContent=now.toLocaleString('ko-KR');
+  $('maxScoreLabel').textContent=maxPossibleScore();
+  $('resultMeta').textContent=
+    `${now.toLocaleString('ko-KR')} · MAX ${maxPossibleScore()} pts`;
   $('resultMae').textContent=(avgAbs/1000).toFixed(3)+' s';
   $('resultCombo').textContent=maxCombo;
   $('resultTaps').textContent=taps;
@@ -463,6 +573,7 @@ function continueGame(){
 
 function launchCelebration(){
   playFanfare();
+  playCheer();
   $('fanfareText').classList.remove('show');
   void $('fanfareText').offsetWidth;
   $('fanfareText').classList.add('show');
@@ -587,7 +698,7 @@ async function shareScore(){
 ${r.nickname}
 
 등급 ${r.grade}
-점수 ${r.score} pts
+점수 ${r.score} / ${maxPossibleScore()} pts
 총 탭 ${r.taps}
 평균오차 ${(r.avg_error/1000).toFixed(3)} s
 최고콤보 ${r.max_combo}
@@ -668,14 +779,20 @@ $('resultRank').onclick=e=>{
 /* sound */
 $('soundBtn').onclick=async e=>{
   e.stopPropagation();
-  if(soundEnabled)stopSound();
-  else{try{await startSound()}catch{}}
+  if(soundEnabled){
+    stopSound();
+  }else{
+    try{await startSound()}catch{}
+  }
 };
 
 /* game input */
-document.addEventListener('pointerdown',e=>{
+document.addEventListener('pointerdown',async e=>{
   if(e.target.closest('button')||e.target.closest('input'))return;
   if(profileOverlay.classList.contains('show')||rankOverlay.classList.contains('show')||resultOverlay.classList.contains('show'))return;
+
+  // iPhone/Safari: first user tap unlocks audio automatically.
+  try{await ensureAudio()}catch{}
   record();
 });
 
@@ -685,6 +802,7 @@ $('continueBtn').onclick=e=>{e.stopPropagation();continueGame()};
 $('share').onclick=e=>{e.stopPropagation();shareScore()};
 
 loadProfile();
+$('soundBtn').classList.add('on');
 updateStats();
 updateClock();
 
