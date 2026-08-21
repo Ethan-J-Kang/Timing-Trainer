@@ -1,0 +1,3653 @@
+<!doctype html>
+<html lang="ko">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,maximum-scale=1,user-scalable=no">
+<title>Millisecond Challenge</title>
+<style>
+:root{
+  --bg:#0f1115;--panel:#181b21;--panel2:#111419;--line:#2b3038;
+  --text:#f4f5f7;--muted:#9098a5;
+  --perfect:#63e6be;--excellent:#64b5f6;--good:#ffd166;--bad:#ff9b71;--miss:#ff5c70;
+}
+*{box-sizing:border-box;-webkit-tap-highlight-color:transparent}
+html,body{margin:0;min-height:100%;background:var(--bg);color:var(--text);font-family:system-ui,-apple-system,BlinkMacSystemFont,"Segoe UI",sans-serif}
+body{touch-action:manipulation;user-select:none;-webkit-user-select:none;overflow-x:hidden}
+.wrap{max-width:760px;min-height:100vh;margin:0 auto;padding:16px;display:flex;flex-direction:column}
+header{display:flex;align-items:center;justify-content:space-between;gap:10px;margin-bottom:12px}
+.brand{font-size:20px;font-weight:1000;letter-spacing:.02em}
+.headerBtns{display:flex;gap:8px}
+button{border:0;border-radius:12px;background:#2c3139;color:#fff;font-weight:900;padding:12px 14px}
+button:active{transform:scale(.98)}
+.iconBtn{width:40px;height:40px;padding:0;font-size:18px}
+.iconBtn.on{background:#1e8f73}
+.profileBar{display:flex;align-items:center;gap:10px;background:var(--panel);border:1px solid var(--line);border-radius:16px;padding:10px;margin-bottom:12px}
+.avatar{width:44px;height:44px;border-radius:50%;object-fit:cover;background:#2b3038;border:1px solid #3b424d}
+.profileText{min-width:0;flex:1}
+.nick{font-weight:900;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.small{color:var(--muted);font-size:12px}
+.editProfile{padding:9px 11px;font-size:12px}
+.game{flex:1;display:flex;flex-direction:column}
+.topStats{display:grid;grid-template-columns:1fr auto 1fr;align-items:center;gap:8px;margin-bottom:8px;font-size:13px;font-weight:900}
+.topStats .right{text-align:right}
+.timer{font-size:18px;font-weight:1000;text-align:center}
+.clock{font:900 clamp(38px,12vw,72px) ui-monospace,SFMono-Regular,Consolas,monospace;text-align:center;margin:auto 0 12px;letter-spacing:-.05em}
+.bar{height:12px;background:#2b3038;border-radius:999px;overflow:hidden}
+.fill{height:100%;width:0;background:linear-gradient(90deg,#4e91ff,#ff56b8)}
+.judgeArea{text-align:center;min-height:116px;display:flex;flex-direction:column;justify-content:center}
+.judge{font-size:36px;font-weight:1000;min-height:44px}
+.error{font:900 19px ui-monospace,SFMono-Regular,Consolas,monospace;color:#c9ced6}
+.combo{min-height:24px;margin-top:3px;font-size:18px;font-weight:1000}
+.card{background:var(--panel);border:1px solid var(--line);border-radius:18px;padding:14px}
+.grid{display:grid;grid-template-columns:1fr 1fr;gap:8px}
+.stat{background:var(--panel2);border-radius:12px;padding:10px}
+.k{color:var(--muted);font-size:12px}
+.v{font:800 15px ui-monospace,SFMono-Regular,Consolas,monospace;margin-top:4px}
+.hint{text-align:center;color:var(--muted);font-size:11px;margin-top:10px}
+.primary{width:100%;margin-top:10px;background:#343a45}
+.startBtn{
+  width:180px;margin:10px auto 0;padding:14px 20px;
+  background:linear-gradient(135deg,#63e6be,#64b5f6);
+  color:#071017;font-size:18px;font-weight:1000;box-shadow:0 10px 28px rgba(100,181,246,.18)
+}
+.startBtn.hidden{display:none}
+.countdown{
+  min-height:28px;margin-top:6px;font-size:20px;font-weight:1000;color:#fff;letter-spacing:.08em
+}
+.overlay{position:fixed;inset:0;background:rgba(7,9,13,.9);display:none;align-items:center;justify-content:center;padding:16px;z-index:50;backdrop-filter:blur(10px)}
+.overlay.show{display:flex}
+.modal{width:min(470px,100%);max-height:94vh;overflow:auto;background:
+linear-gradient(180deg,rgba(35,39,48,.98),rgba(20,23,29,.98));
+border:1px solid #3a414d;border-radius:28px;padding:22px;position:relative;z-index:60;
+box-shadow:0 30px 90px rgba(0,0,0,.55)}
+.modal h2{margin:0 0 14px}
+.field{margin-bottom:12px}
+.field label{display:block;color:var(--muted);font-size:12px;margin-bottom:6px}
+.field input{width:100%;border:1px solid #363c46;background:#111419;color:#fff;border-radius:12px;padding:12px;font-size:16px}
+.avatarPicker{display:flex;align-items:center;gap:12px}
+.avatarPicker img{width:72px;height:72px;border-radius:50%;object-fit:cover;background:#2b3038}
+.modalBtns{display:flex;gap:8px;margin-top:14px}
+.modalBtns button{flex:1}
+.resultHero{display:flex;flex-direction:column;align-items:center;text-align:center}
+.resultAvatarWrap{position:relative;margin-top:4px}
+.resultAvatar{
+width:118px;height:118px;border-radius:50%;object-fit:cover;background:#2b3038;
+border:3px solid rgba(255,255,255,.82);
+box-shadow:0 0 0 6px rgba(99,230,190,.08),0 16px 36px rgba(0,0,0,.42)
+}
+.gradeBadge{
+position:absolute;right:-22px;bottom:-12px;min-width:72px;height:64px;padding:0 10px;border-radius:20px;
+background:linear-gradient(135deg,#63e6be,#64b5f6 60%,#b48cff);
+border:2px solid rgba(255,255,255,.92);color:#081018;
+display:flex;align-items:center;justify-content:center;font-size:19px;font-weight:1000;
+box-shadow:0 12px 30px rgba(0,0,0,.42),0 0 34px rgba(99,230,190,.28)
+}
+.resultNick{font-size:19px;font-weight:1000;margin-top:16px}
+.finalScore{
+font-size:34px;font-weight:1000;margin-top:6px;letter-spacing:-.03em;
+background:linear-gradient(90deg,#fff,#63e6be,#64b5f6);
+-webkit-background-clip:text;background-clip:text;color:transparent
+}
+.resultMeta{color:var(--muted);font-size:13px;margin-top:4px}
+.breakdown{margin-top:14px;background:#111419;border-radius:14px;padding:12px;line-height:1.8;font-size:14px}
+.shareBtn{background:#1f8f73}
+.rankTabs{display:grid;grid-template-columns:repeat(3,1fr);gap:6px;margin-bottom:12px}
+.rankTab{padding:10px 6px;font-size:13px;background:#252a31}
+.rankTab.active{background:#1f8f73}
+.rankList{display:flex;flex-direction:column;gap:7px}
+.rankRow{display:grid;grid-template-columns:34px 42px 1fr auto;gap:8px;align-items:center;background:#111419;border-radius:13px;padding:9px}
+.rankNo{text-align:center;font-weight:1000}
+.rankAvatar{width:38px;height:38px;border-radius:50%;object-fit:cover;background:#2b3038}
+.rankName{font-weight:900;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.rankDate{font-size:11px;color:var(--muted)}
+.rankScore{text-align:right;font-weight:1000}
+.rankGrade{font-size:11px;color:var(--muted)}
+.me{outline:1px solid #5fe0c0}
+.empty{text-align:center;color:var(--muted);padding:28px 10px}
+.note{color:var(--muted);font-size:11px;line-height:1.5;margin-top:12px}
+#fxCanvas{position:fixed;inset:0;width:100%;height:100%;pointer-events:none;z-index:55}
+.fanfareText{position:fixed;left:50%;top:16%;transform:translate(-50%,-50%) scale(.6);font-size:40px;font-weight:1000;letter-spacing:.08em;color:#fff;opacity:0;z-index:56;pointer-events:none;text-shadow:0 4px 20px rgba(0,0,0,.5)}
+.fanfareText.show{animation:fanfarePop 1.1s ease-out forwards}
+
+.lowFailFlash{
+  position:fixed;inset:0;z-index:54;pointer-events:none;
+  background:radial-gradient(circle at center,rgba(255,255,255,0) 20%,rgba(0,0,0,.72) 100%);
+  opacity:0;
+}
+.lowFailFlash.show{animation:lowFail 1.9s ease-out forwards}
+@keyframes lowFail{
+  0%{opacity:0}
+  18%{opacity:.72}
+  52%{opacity:.48}
+  100%{opacity:0}
+}
+.resultLowWobble{animation:lowWobble .7s ease-in-out}
+@keyframes lowWobble{
+  0%,100%{transform:rotate(0deg) scale(1)}
+  20%{transform:rotate(-1.2deg) scale(.985)}
+  40%{transform:rotate(1deg) scale(.98)}
+  60%{transform:rotate(-.7deg) scale(.985)}
+  80%{transform:rotate(.4deg) scale(.99)}
+}
+
+@keyframes fanfarePop{
+  0%{opacity:0;transform:translate(-50%,-50%) scale(.6)}
+  20%{opacity:1;transform:translate(-50%,-50%) scale(1.15)}
+  55%{opacity:1;transform:translate(-50%,-50%) scale(1)}
+  100%{opacity:0;transform:translate(-50%,-70%) scale(1)}
+}
+</style>
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+
+<style>
+/* MEMBER MODE */
+.memberGate{
+  position:fixed;inset:0;z-index:200;background:
+  radial-gradient(circle at 50% 20%,rgba(100,181,246,.10),transparent 38%),
+  #0f1115;
+  display:flex;align-items:center;justify-content:center;padding:18px
+}
+.memberGate.hidden{display:none}
+.memberCard{
+  width:min(430px,100%);background:linear-gradient(180deg,#1b1f27,#14171d);
+  border:1px solid #343b46;border-radius:26px;padding:22px;
+  box-shadow:0 30px 90px rgba(0,0,0,.52)
+}
+.memberLogo{font-size:20px;font-weight:1000;letter-spacing:.06em;text-align:center}
+.memberOnly{text-align:center;color:#63e6be;font-size:11px;font-weight:900;letter-spacing:.22em;margin:6px 0 20px}
+.memberField{margin-top:11px}
+.memberField label{display:block;color:#8f98a5;font-size:12px;margin:0 0 6px}
+.memberField input{
+  width:100%;background:#101319;color:#fff;border:1px solid #343b46;
+  border-radius:12px;padding:13px;font-size:16px;outline:none
+}
+.memberField input:focus{border-color:#64b5f6}
+.memberPrimary{
+  width:100%;margin-top:14px;background:linear-gradient(135deg,#63e6be,#64b5f6);
+  color:#071017;font-size:16px
+}
+.memberSecondary{width:100%;margin-top:8px;background:#252a32}
+.memberMsg{min-height:20px;margin-top:10px;text-align:center;color:#ff9b71;font-size:12px;line-height:1.45}
+.memberSwitch{text-align:center;margin-top:14px;color:#8f98a5;font-size:12px}
+.memberLink{color:#64b5f6;text-decoration:underline;cursor:pointer}
+.memberPanel{display:none}
+.memberPanel.active{display:block}
+.memberUserBtn{font-size:15px}
+.adminInviteBox{word-break:break-all;background:#101319;border:1px solid #343b46;border-radius:12px;padding:12px;margin-top:12px;font-size:13px}
+.authModalText{color:#9098a5;font-size:13px;line-height:1.55}
+</style>
+
+
+<style>
+.modeDock{display:block;margin:0 0 10px}
+.modeGroup{display:grid;grid-template-columns:repeat(4,1fr);gap:5px;background:#15191f;border:1px solid #2b3038;border-radius:12px;padding:4px}
+.modeGroup.mode3{grid-template-columns:repeat(3,1fr)}
+.modeBtn{padding:8px 5px;background:#22272f;font-size:11px;border-radius:9px}
+.modeBtn.active{background:#1f8f73;color:#fff}
+.battleBtn{width:100%;margin-bottom:12px;background:linear-gradient(135deg,#6c5ce7,#4e91ff)}
+.battleCode{font:1000 28px ui-monospace,SFMono-Regular,Consolas,monospace;letter-spacing:.18em;text-align:center;margin:12px 0}
+.battleStatus{text-align:center;color:#9ea7b4;font-size:13px;line-height:1.5;margin:8px 0 12px}
+.battlePlayers{display:flex;flex-direction:column;gap:7px;margin:12px 0}
+.battlePlayer{display:grid;grid-template-columns:42px 1fr auto;gap:9px;align-items:center;background:#111419;border-radius:13px;padding:9px}
+.battlePlayer img{width:38px;height:38px;border-radius:50%;object-fit:cover;background:#2b3038}
+.readyPill{font-size:11px;font-weight:900;padding:6px 8px;border-radius:999px;background:#303640;color:#aeb6c2}
+.readyPill.on{background:#1f8f73;color:white}
+.battleResultHero{text-align:center;font-size:38px;font-weight:1000;margin:8px 0 14px}
+.battleResultHero.win{color:#63e6be}
+.battleResultHero.lose{color:#ff6b7a}
+.battleResultHero.place{color:#64b5f6}
+.battleResultRow{display:grid;grid-template-columns:38px 1fr auto;gap:8px;align-items:center;padding:11px;background:#111419;border-radius:13px;margin-top:7px}
+.battleResultRow.me{outline:1px solid #63e6be}
+.battleResultScore{text-align:right;font-weight:1000}
+.guestBadge{font-size:11px;color:#ffd166}
+</style>
+
+
+<style>
+/* DB REQUEST SIM */
+.modeGroup.mode3{grid-template-columns:repeat(3,1fr)}
+#dbSimPanel{display:none;background:#b2c7d9;border-radius:18px;overflow:hidden;border:1px solid #8fa6b8;margin-bottom:12px;min-height:560px;position:relative}
+.dbChatHeader{background:#a9bdce;color:#1e2a33;padding:14px 16px;font-weight:900;display:flex;align-items:center;justify-content:space-between;gap:8px}
+.dbChatHeader .sub{font-size:11px;font-weight:700;opacity:.65}
+.dbClock{font:900 24px ui-monospace,SFMono-Regular,Consolas,monospace;color:#17212a;text-align:center;padding:12px 8px 6px;letter-spacing:-.04em}
+.dbGuide{text-align:center;color:#465967;font-size:12px;font-weight:800;padding:0 12px 10px}
+.dbChat{height:360px;overflow:auto;padding:12px 10px 18px;display:flex;flex-direction:column;gap:7px;background:#b2c7d9}
+.dbMsg{display:flex;flex-direction:column;align-items:flex-start;max-width:88%}
+.dbMsg.me{align-self:flex-end;align-items:flex-end}
+.dbName{font-size:11px;color:#435461;margin:0 4px 3px;font-weight:800}
+.dbBubble{background:#fff;color:#12181d;border-radius:4px 12px 12px 12px;padding:9px 11px;font-size:14px;box-shadow:0 1px 1px rgba(0,0,0,.08);word-break:keep-all}
+.dbMsg.me .dbBubble{background:#ffe812;border-radius:12px 4px 12px 12px}
+.dbTime{font-size:10px;color:#62727e;margin:3px 4px 0}
+.dbBottom{background:#f4f4f4;padding:10px;border-top:1px solid rgba(0,0,0,.08)}
+.dbPrepared{background:#fff;border:1px solid #ddd;border-radius:10px;padding:11px 12px;color:#333;font-size:14px;min-height:42px}
+.dbSendHint{text-align:center;color:#5b6770;font-size:11px;margin-top:7px;font-weight:800}
+.dbSimBtn{width:100%;margin-top:9px;background:#fee500;color:#2b2925}
+.dbResult{display:none;background:#15202a;color:#fff;padding:14px;border-radius:14px;margin:0 10px 10px;text-align:center}
+.dbResult .rank{font-size:32px;font-weight:1000}
+.dbResult .delta{font:900 16px ui-monospace,SFMono-Regular,Consolas,monospace;margin-top:4px}
+.dbResult .small2{font-size:11px;color:#aeb8c0;margin-top:5px}
+</style>
+
+
+<style>
+.dbActionRow{
+  display:grid;
+  grid-template-columns:1fr;
+  gap:8px;
+  margin-top:10px;
+}
+.dbSendBtn{
+  width:100%;
+  padding:18px 14px;
+  border-radius:16px;
+  font-size:20px;
+  font-weight:1000;
+  letter-spacing:.08em;
+  background:linear-gradient(135deg,#63e6be,#64b5f6);
+  color:#071017;
+  box-shadow:0 8px 24px rgba(0,0,0,.18);
+}
+.dbBattleBtnClean{
+  width:100%;
+  padding:11px 12px;
+  border-radius:12px;
+  font-size:13px;
+  font-weight:900;
+  background:#20252d;
+  border:1px solid #343b46;
+  color:#d9e0e8;
+}
+.dbBattleBtnClean.active{
+  border-color:#6c8cff;
+  background:#262d3a;
+}
+</style>
+
+
+<style>
+.onlineBox{
+  margin-top:14px;padding:10px;border-radius:13px;
+  background:#111419;border:1px solid #2d333c
+}
+.onlineTitle{
+  display:flex;justify-content:space-between;align-items:center;
+  font-size:12px;font-weight:900;color:#dce3ea;margin-bottom:8px
+}
+.onlineList{display:flex;flex-direction:column;gap:6px;max-height:210px;overflow:auto}
+.onlineRow{
+  display:grid;grid-template-columns:10px 1fr auto;gap:8px;align-items:center;
+  padding:9px 8px;border-radius:10px;background:#171b21
+}
+.onlineDot{width:8px;height:8px;border-radius:50%;background:#63e6be;box-shadow:0 0 8px rgba(99,230,190,.6)}
+.onlineName{font-size:13px;font-weight:900;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.inviteMini{
+  padding:7px 10px;border-radius:9px;border:1px solid #3a4350;
+  background:#252b34;color:#fff;font-size:11px;font-weight:900
+}
+.inviteMini:disabled{opacity:.5}
+.codeFallback{margin-top:12px;padding-top:10px;border-top:1px solid #2a3038}
+.invitePopupName{text-align:center;font-size:19px;font-weight:1000;margin:12px 0 4px}
+.invitePopupMode{text-align:center;color:#9aa4b2;font-size:13px;margin-bottom:14px}
+</style>
+
+
+<style>
+/* DB SIM v10 compact layout */
+#dbSimPanel{
+  min-height:0 !important;
+  height:calc(100dvh - 205px);
+  max-height:650px;
+  min-height:430px;
+  display:none;
+  flex-direction:column;
+}
+#dbSimPanel.dbVisible{display:flex}
+.dbChatHeader{padding:9px 12px}
+.dbClock{font-size:21px;padding:8px 8px 3px}
+.dbGuide{font-size:11px;padding:0 10px 6px}
+.dbChat{
+  height:auto !important;
+  min-height:120px;
+  flex:1 1 auto;
+  padding:8px 9px 10px;
+  gap:5px;
+}
+.dbBubble{padding:7px 9px;font-size:13px}
+.dbName{font-size:10px;margin-bottom:2px}
+.dbTime{font-size:9px;margin-top:2px}
+.dbBottom{padding:8px}
+.dbPrepared{padding:8px 10px;min-height:34px;font-size:12px;border-radius:8px}
+.dbActionRow{margin-top:7px;gap:6px}
+.dbSendBtn{
+  width:100%;
+  padding:14px 12px;
+  border-radius:11px;
+  font-size:18px;
+  font-weight:1000;
+  letter-spacing:.08em;
+  background:#8e1725 !important;
+  color:#fff !important;
+  border:1px solid #b92b3b;
+  box-shadow:inset 0 1px 0 rgba(255,255,255,.16),0 5px 14px rgba(80,0,8,.28);
+}
+.dbSendBtn:active{
+  transform:translateY(1px);
+  background:#75111d !important;
+  box-shadow:inset 0 2px 5px rgba(0,0,0,.32);
+}
+.dbBattleBtnClean{
+  margin-top:0;
+  padding:9px 10px;
+  border-radius:9px;
+  font-size:12px;
+  background:#20242b !important;
+  border:1px solid #343a44 !important;
+  color:#d8dde5 !important;
+  box-shadow:none !important;
+}
+.dbSendHint{font-size:10px;margin-top:5px}
+.dbResult{
+  flex:0 0 auto;
+  max-height:42%;
+  overflow:auto;
+  margin:0 8px 7px;
+  padding:9px;
+  text-align:left;
+}
+.dbResult .rank{text-align:center;font-size:24px}
+.dbResult .delta{text-align:center;font-size:14px}
+.dbResult .small2{text-align:center}
+.dbScoreTable{display:flex;flex-direction:column;gap:4px;margin-top:8px}
+.dbScoreRow{
+  display:grid;
+  grid-template-columns:30px minmax(70px,1fr) 100px 62px;
+  gap:5px;
+  align-items:center;
+  padding:7px 7px;
+  border-radius:8px;
+  background:#10161c;
+  color:#e8edf2;
+  font-size:10px;
+}
+.dbScoreRow.invalid{
+  background:#181b20;
+  color:#6e7680;
+  opacity:.82;
+}
+.dbScoreRow.me{
+  outline:1px solid #d7dde4;
+  background:#1c242c;
+}
+.dbScoreRow.invalid.me{
+  outline:1px solid #545c66;
+  background:#1b1e23;
+}
+.dbScoreRank{text-align:center;font-weight:1000}
+.dbScoreName{font-weight:900;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.dbScoreTime,.dbScoreDelta{
+  font-family:ui-monospace,SFMono-Regular,Consolas,monospace;
+  text-align:right;
+}
+@media(max-width:520px){
+  #dbSimPanel{
+    height:calc(100dvh - 180px);
+    min-height:390px;
+    max-height:none;
+    border-radius:14px;
+  }
+  .dbChatHeader{padding:7px 10px}
+  .dbClock{font-size:19px;padding-top:6px}
+  .dbGuide{font-size:10px;padding-bottom:5px}
+  .dbChat{padding:6px 7px 8px}
+  .dbBottom{padding:7px}
+  .dbSendBtn{padding:12px 10px;font-size:17px}
+  .dbPrepared{font-size:11px}
+  .dbScoreRow{grid-template-columns:25px minmax(58px,1fr) 86px 56px;font-size:9px;padding:6px 5px}
+}
+</style>
+
+</head>
+<body>
+
+<div class="memberGate" id="memberGate">
+  <div class="memberCard">
+    <div class="memberLogo">MILLISECOND CHALLENGE</div>
+    <div class="memberOnly">MEMBERS ONLY</div>
+
+    <div class="memberPanel active" id="loginPanel">
+      <div class="memberField">
+        <label>아이디</label>
+        <input id="loginUsername" autocomplete="username" placeholder="아이디">
+      </div>
+      <div class="memberField">
+        <label>비밀번호</label>
+        <input id="loginPassword" type="password" autocomplete="current-password" placeholder="비밀번호">
+      </div>
+      <button class="memberPrimary" id="loginBtn">LOGIN</button>
+      <button class="memberSecondary" id="publicSignupBtn">가입하기</button>
+      <button class="memberSecondary" id="guestPlayBtn">GUEST PLAY</button>
+      <div class="memberMsg" id="loginMsg"></div>
+      <div class="memberSwitch" id="inviteHint">가입은 1회용 초대링크로만 가능합니다.</div>
+    </div>
+
+    <div class="memberPanel" id="signupPanel">
+      <div class="memberField">
+        <label>아이디 · 가입 후 변경 불가</label>
+        <input id="signupUsername" autocomplete="username" maxlength="20" placeholder="원하는 아이디">
+      </div>
+      <div class="memberField">
+        <label>비밀번호</label>
+        <input id="signupPassword" type="password" autocomplete="new-password" placeholder="8자 이상">
+      </div>
+      <div class="memberField">
+        <label>닉네임 · 나중에 변경 가능</label>
+        <input id="signupNickname" maxlength="18" placeholder="랭킹에 표시할 이름">
+      </div>
+      <div class="memberField">
+        <label>프로필 사진 · 선택</label>
+        <input id="signupAvatar" type="file" accept="image/*">
+      </div>
+      <div class="memberSwitch">비밀번호 분실 시 관리자에게 초기화를 요청하세요.</div>
+      <button class="memberPrimary" id="signupBtn">JOIN</button>
+      <div class="memberMsg" id="signupMsg"></div>
+    </div>
+  </div>
+</div>
+
+<div class="overlay" id="adminInviteOverlay">
+  <div class="modal">
+    <h2>팀원 초대</h2>
+    <div class="authModalText">1회용 초대링크를 만들어 카카오톡으로 보내세요. 한 번 가입되면 같은 링크는 다시 사용할 수 없습니다.</div>
+    <button class="shareBtn" style="width:100%;margin-top:14px" id="makeInviteBtn">1회용 초대링크 만들기</button>
+    <div class="adminInviteBox" id="inviteResult">아직 만든 링크가 없습니다.</div>
+    <div class="modalBtns">
+      <button id="copyInviteBtn">복사</button>
+      <button id="shareInviteBtn" class="shareBtn">공유</button>
+    </div>
+    <button style="width:100%;margin-top:8px" id="closeInviteBtn">닫기</button>
+  </div>
+</div>
+
+<div class="lowFailFlash" id="lowFailFlash"></div>
+<canvas id="fxCanvas"></canvas>
+<div class="fanfareText" id="fanfareText">RESULT!</div>
+
+<audio id="resultAudioA" src="./A.mp3" preload="auto"></audio>
+<audio id="resultAudioB" src="./B.mp3" preload="auto"></audio>
+<audio id="resultAudioLow" src="./B-.mp3" preload="auto"></audio>
+
+<div class="wrap">
+<header>
+  <div class="brand">MILLISECOND CHALLENGE <span style="font-size:10px;color:#9098a5">DBSIM v10</span></div>
+  <div class="headerBtns">
+    <button class="iconBtn" id="soundBtn" aria-label="틱 소리">🔊</button>
+    <button class="iconBtn" id="rankBtn" aria-label="랭킹">🏆</button>
+    <button class="iconBtn memberUserBtn" id="adminInviteBtn" style="display:none" aria-label="초대">✉️</button>
+    <button class="iconBtn memberUserBtn" id="logoutBtn" aria-label="로그아웃">↪</button>
+  </div>
+</header>
+
+<div class="profileBar">
+  <img class="avatar" id="headerAvatar" alt="">
+  <div class="profileText">
+    <div class="nick" id="headerNick">GUEST</div>
+    <div class="small" id="profileModeLabel">60 SECOND · 60 TAP CHALLENGE</div>
+  </div>
+  <button class="editProfile" id="profileBtn">프로필</button>
+</div>
+
+
+<div class="modeDock" id="modeDock">
+  <div class="modeGroup">
+    <button class="modeBtn" id="sec30Btn">30 SEC</button>
+    <button class="modeBtn active" id="sec60Btn">60 SEC</button>
+    <button class="modeBtn" id="battleModeBtn">BATTLE</button>
+    <button class="modeBtn" id="dbSimModeBtn">DB SIM</button>
+  </div>
+</div>
+<button class="battleBtn" id="openBattleBtn" style="display:none">⚔️ BATTLE LOBBY</button>
+
+
+<div id="dbSimPanel">
+  <div class="dbChatHeader">
+    <div>신규DB 요청방 <span class="sub">실전 시뮬레이션</span></div>
+    <div class="sub" id="dbPeopleCount">61명</div>
+  </div>
+  <div class="dbClock" id="dbSimClock">00:00:00.000</div>
+  <div class="dbGuide" id="dbSimGuide">START를 누르면 17:59:55부터 18:00:00 요청 상황을 재현합니다.</div>
+  <div class="dbChat" id="dbChat"></div>
+  <div class="dbResult" id="dbResult">
+    <div class="rank" id="dbRank">—</div>
+    <div class="delta" id="dbDelta">—</div>
+    <div class="small2" id="dbResultText"></div>
+    <div class="dbScoreTable" id="dbScoreTable"></div>
+  </div>
+  <div class="dbBottom">
+    <div class="dbPrepared" id="dbPreparedMsg">GUEST 0 디비요청드립니다</div>
+    <div class="dbActionRow">
+      <button class="dbSendBtn" id="dbSendBtn">START</button>
+      <button class="dbBattleBtnClean" id="dbSimBattleBtn">MULTI</button>
+    </div>
+    <div class="dbSendHint" id="dbSendHint">START 후 PC Enter / Space 또는 SEND 버튼으로 전송</div>
+  </div>
+</div>
+
+<main class="game" id="normalGame">
+  <div class="topStats">
+    <div id="tapCount">0 TAP</div>
+    <div class="timer" id="timer">60.0</div>
+    <div class="right" id="scoreLive">0점</div>
+  </div>
+
+  <div class="clock" id="clock">00:00:00.000</div>
+  <div class="bar"><div class="fill" id="fill"></div></div>
+
+  <div class="judgeArea">
+    <div class="judge" id="judge">READY</div>
+    <div class="error" id="error">START를 누르면 3·2·1 후 시작</div>
+    <div class="countdown" id="countdown"></div>
+    <div class="combo" id="combo"></div>
+    <button class="startBtn" id="startBtn">START</button>
+  </div>
+
+  <div class="card">
+    <div class="grid">
+      <div class="stat"><div class="k">평균 절대오차</div><div class="v" id="mae">—</div></div>
+      <div class="stat"><div class="k">평균 편향</div><div class="v" id="bias">—</div></div>
+      <div class="stat"><div class="k">현재 콤보</div><div class="v" id="comboStat">0</div></div>
+      <div class="stat"><div class="k">최고 콤보</div><div class="v" id="maxCombo">0</div></div>
+    </div>
+    <button class="primary" id="reset">RESET</button>
+    <div class="hint">
+Perfect ±0.015 s · Excellent ±0.030 s · Good ±0.060 s · Bad ±0.120 s<br>
+Excellent 이상 콤보 보너스 · 10 COMBO부터 가속 · 최대 7560 pts
+</div>
+  </div>
+</main>
+</div>
+
+
+
+<!-- DB SIM Battle Lobby -->
+<div class="overlay" id="dbBattleOverlay">
+  <div class="modal">
+    <div style="display:flex;justify-content:space-between;align-items:center;gap:10px">
+      <h2 style="margin:0">💬 DB SIM BATTLE</h2>
+      <button id="dbBattleClose">닫기</button>
+    </div>
+
+    <div id="dbBattleEntry">
+      <div class="authModalText" style="margin-top:12px">
+        같은 가상 18:00:00.000과 같은 AI 60명을 상대로 동시에 경쟁합니다.
+      </div>
+      <div class="onlineBox">
+        <div class="onlineTitle"><span>현재 접속 중</span><button class="inviteMini" id="refreshDbOnlineBtn">새로고침</button></div>
+        <div class="onlineList" id="dbOnlineList"><div class="small">불러오는 중...</div></div>
+      </div>
+      <button class="shareBtn" style="width:100%;margin-top:12px" id="createDbBattleBtn">빈 방 만들기</button>
+      <div class="codeFallback">
+        <div class="field">
+          <label>비공개 초대코드</label>
+          <input id="dbBattleCodeInput" maxlength="4" inputmode="numeric" pattern="[0-9]*" placeholder="예: 4821">
+        </div>
+        <button style="width:100%" id="joinDbBattleBtn">코드로 입장</button>
+      </div>
+      <div class="memberMsg" id="dbBattleMsg"></div>
+    </div>
+
+    <div id="dbBattleRoom" style="display:none">
+      <div class="small" style="text-align:center;margin-top:12px">ROOM CODE</div>
+      <div class="battleCode" id="dbBattleRoomCode">----</div>
+      <div class="battleStatus" id="dbBattleRoomStatus">참가자를 기다리는 중...</div>
+      <div class="battlePlayers" id="dbBattlePlayers"></div>
+      <div class="onlineBox">
+        <div class="onlineTitle"><span>추가 초대</span><button class="inviteMini" id="refreshDbRoomOnlineBtn">새로고침</button></div>
+        <div class="onlineList" id="dbRoomOnlineList"></div>
+      </div>
+      <div class="modalBtns">
+        <button id="dbBattleReadyBtn">READY</button>
+        <button id="dbBattleStartBtn" class="shareBtn" style="display:none">START</button>
+      </div>
+      <div class="modalBtns" style="margin-top:8px">
+        <button id="dbBattleShareBtn">방 코드 공유</button>
+        <button id="dbBattleLeaveBtn">나가기</button>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- DB SIM Battle Result -->
+<div class="overlay" id="dbBattleResultOverlay">
+  <div class="modal">
+    <div class="small" style="text-align:center;letter-spacing:.18em;font-weight:900">DB SIM BATTLE RESULT</div>
+    <div class="battleResultHero" id="dbBattleResultHero">RESULT</div>
+    <div class="battleStatus" id="dbBattleHumanSummary"></div>
+    <div id="dbBattleResultList"></div>
+    <button class="shareBtn" style="width:100%;margin-top:16px" id="dbBattleResultClose">확인</button>
+  </div>
+</div>
+
+<!-- Battle Lobby -->
+<div class="overlay" id="battleOverlay">
+  <div class="modal">
+    <div style="display:flex;justify-content:space-between;align-items:center;gap:10px">
+      <h2 style="margin:0">⚔️ BATTLE</h2>
+      <button id="battleClose">닫기</button>
+    </div>
+
+    <div id="battleEntry">
+      <div class="authModalText" style="margin-top:12px">
+        회원끼리 같은 방에 들어와 READY 후 동시에 시작합니다.<br>
+        60초 경기는 공식 일간·주간·역대 기록에 자동 반영됩니다.
+      </div>
+      <div class="onlineBox">
+        <div class="onlineTitle"><span>현재 접속 중</span><button class="inviteMini" id="refreshBattleOnlineBtn">새로고침</button></div>
+        <div class="onlineList" id="battleOnlineList"><div class="small">불러오는 중...</div></div>
+      </div>
+      <button class="shareBtn" style="width:100%;margin-top:12px" id="createBattleBtn">빈 방 만들기</button>
+      <div class="codeFallback">
+        <div class="field">
+          <label>비공개 초대코드</label>
+          <input id="battleCodeInput" maxlength="4" inputmode="numeric" pattern="[0-9]*" placeholder="예: 4821">
+        </div>
+        <button style="width:100%" id="joinBattleBtn">코드로 입장</button>
+      </div>
+      <div class="memberMsg" id="battleMsg"></div>
+    </div>
+
+    <div id="battleRoom" style="display:none">
+      <div class="small" style="text-align:center;margin-top:12px">ROOM CODE</div>
+      <div class="battleCode" id="battleRoomCode">----</div>
+      <div class="battleStatus" id="battleRoomStatus">참가자를 기다리는 중...</div>
+      <div class="battlePlayers" id="battlePlayers"></div>
+      <div class="onlineBox">
+        <div class="onlineTitle"><span>추가 초대</span><button class="inviteMini" id="refreshBattleRoomOnlineBtn">새로고침</button></div>
+        <div class="onlineList" id="battleRoomOnlineList"></div>
+      </div>
+      <div class="modalBtns">
+        <button id="battleReadyBtn">READY</button>
+        <button id="battleStartBtn" class="shareBtn" style="display:none">START BATTLE</button>
+      </div>
+      <div class="modalBtns" style="margin-top:8px">
+        <button id="battleShareBtn">방 코드 공유</button>
+        <button id="battleLeaveBtn">나가기</button>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- Battle Result -->
+<div class="overlay" id="battleResultOverlay">
+  <div class="modal">
+    <div class="small" style="text-align:center;letter-spacing:.18em;font-weight:900">BATTLE RESULT</div>
+    <div class="battleResultHero" id="battleResultHero">RESULT</div>
+    <div id="battleResultList"></div>
+    <button class="shareBtn" style="width:100%;margin-top:16px" id="battleResultClose">확인</button>
+  </div>
+</div>
+
+
+<!-- Game Invite Popup -->
+<div class="overlay" id="gameInviteOverlay">
+  <div class="modal">
+    <div class="small" style="text-align:center;letter-spacing:.16em;font-weight:900">GAME INVITE</div>
+    <div class="invitePopupName" id="gameInviteFrom">누군가</div>
+    <div class="invitePopupMode" id="gameInviteMode">BATTLE에 초대했습니다.</div>
+    <div class="modalBtns">
+      <button id="gameInviteDecline">거절</button>
+      <button id="gameInviteAccept" class="shareBtn">수락</button>
+    </div>
+  </div>
+</div>
+
+<!-- Profile -->
+<div class="overlay" id="profileOverlay">
+  <div class="modal">
+    <h2>프로필</h2>
+    <div class="avatarPicker">
+      <img id="previewAvatar" alt="">
+      <div style="flex:1">
+        <div class="field">
+          <label>닉네임</label>
+          <input id="nicknameInput" maxlength="18" placeholder="닉네임">
+        </div>
+        <div class="field">
+          <label>프로필 사진</label>
+          <input id="avatarInput" type="file" accept="image/*">
+        </div>
+      </div>
+    </div>
+    <div class="modalBtns">
+      <button id="profileCancel">취소</button>
+      <button id="profileSave" class="shareBtn">저장</button>
+    </div>
+  </div>
+</div>
+
+<!-- Result -->
+<div class="overlay" id="resultOverlay">
+  <div class="modal">
+    <div class="resultHero">
+      <div class="small" id="resultDurationLabel" style="letter-spacing:.18em;font-weight:900">60 SECOND RESULT</div>
+      <div style="width:72px;height:3px;border-radius:99px;background:linear-gradient(90deg,#63e6be,#64b5f6,#b48cff);margin:10px auto 12px"></div>
+      <div class="resultAvatarWrap">
+        <img class="resultAvatar" id="resultAvatar" alt="">
+        <div class="gradeBadge" id="finalGrade">A++</div>
+      </div>
+      <div class="resultNick" id="resultNick">GUEST</div>
+      <div class="finalScore"><span id="finalScore">0</span> / <span id="maxScoreLabel">0</span> pts</div>
+      <div class="resultMeta" id="resultMeta"></div>
+    </div>
+
+    <div class="grid" style="margin-top:16px">
+      <div class="stat"><div class="k">평균 절대오차</div><div class="v" id="resultMae">—</div></div>
+      <div class="stat"><div class="k">최고 콤보</div><div class="v" id="resultCombo">0</div></div>
+      <div class="stat"><div class="k">총 탭 수</div><div class="v" id="resultTaps">0</div></div>
+      <div class="stat"><div class="k">Perfect 비율</div><div class="v" id="perfectRate">0%</div></div>
+    </div>
+
+    <div class="breakdown" id="breakdown"></div>
+
+    <div class="modalBtns">
+      <button id="resultReset">RESET</button>
+      <button id="continueBtn" class="shareBtn">CONTINUE</button>
+    </div>
+    <div class="modalBtns" style="margin-top:8px">
+      <button id="share" class="shareBtn">결과 카드 공유</button>
+      <button id="resultRank">랭킹 보기</button>
+    </div>
+  </div>
+</div>
+
+<!-- Ranking -->
+<div class="overlay" id="rankOverlay">
+  <div class="modal">
+    <div style="display:flex;justify-content:space-between;align-items:center;gap:10px">
+      <h2 style="margin:0">🏆 RANKING</h2>
+      <button id="rankClose" style="padding:9px 12px">닫기</button>
+    </div>
+
+    <div class="rankTabs" style="margin-top:14px">
+      <button class="rankTab active" data-mode="all">역대</button>
+      <button class="rankTab" data-mode="week">이번 주</button>
+      <button class="rankTab" data-mode="today">오늘</button>
+    </div>
+
+    <div class="rankList" id="rankList"></div>
+
+    <div class="note">
+      Supabase 공용 랭킹입니다. 같은 닉네임은 기간별 최고점 1개만 랭킹에 반영합니다.
+    </div>
+  </div>
+</div>
+
+<script>
+(()=>{
+const $=id=>document.getElementById(id);
+
+const SUPABASE_URL='https://vpymqzshsycwxnwqmped.supabase.co';
+const SUPABASE_KEY='sb_publishable_u5Bfb25FL-FG7pMqlMTg_Q_jnZWeuv4';
+
+const sb=window.supabase.createClient(SUPABASE_URL,SUPABASE_KEY,{
+  auth:{
+    persistSession:true,
+    autoRefreshToken:true,
+    detectSessionInUrl:true
+  }
+});
+
+let currentSession=null;
+let memberProfile=null;
+
+let currentInviteLink='';
+
+let presenceTimer=null;
+let inviteChannel=null;
+let pendingGameInvite=null;
+
+let guestMode=false;
+let selectedDuration=60;
+
+const battleState={
+  active:false,
+  room:null,
+  players:[],
+  channel:null,
+  ready:false,
+  resultShown:false
+};
+
+let currentMode='solo';
+const dbSimState={
+  active:false,
+  sent:false,
+  targetTs:0,
+  userOffset:null,
+  bots:[],
+  timers:[],
+  simBaseReal:0,
+  simBaseTs:0,
+  clockTimer:null,
+  finished:false
+};
+
+const dbBattleState={
+  active:false,
+  room:null,
+  players:[],
+  channel:null,
+  ready:false,
+  resultShown:false,
+  localStarted:false
+};
+
+
+
+
+const EDGE_SLUGS = {
+  redeemInvite: 'bright-service',
+  loginUsername: 'hyper-handler',
+  updateProfile: 'bright-responder',
+  createInvite: 'super-processor'
+};
+
+
+function sbHeaders(extra={}){
+  return {
+    apikey:SUPABASE_KEY,
+    Authorization:`Bearer ${currentSession?.access_token||SUPABASE_KEY}`,
+    ...extra
+  };
+}
+
+async function sbInsertScore(record){
+  if(!currentSession?.user?.id) throw new Error('login required');
+
+  const payload={
+    user_id:currentSession.user.id,
+    nickname:record.nickname,
+    avatar_url:null,
+    score:record.score,
+    grade:record.grade,
+    avg_error:+(record.avg_error/1000).toFixed(3),
+    max_combo:record.max_combo,
+    taps:record.taps,
+    perfect:record.perfect,
+    excellent:record.excellent,
+    good:record.good,
+    bad:record.bad,
+    miss:record.miss,
+    played_at:record.played_at
+  };
+
+  const res=await fetch(`${SUPABASE_URL}/rest/v1/scores`,{
+    method:'POST',
+    headers:sbHeaders({
+      'Content-Type':'application/json',
+      Prefer:'return=minimal'
+    }),
+    body:JSON.stringify(payload)
+  });
+
+  if(!res.ok){
+    const msg=await res.text();
+    throw new Error('score insert failed: '+msg);
+  }
+}
+
+async function sbFetchScores(mode='all'){
+  let url=`${SUPABASE_URL}/rest/v1/scores?select=*`;
+
+  if(mode==='today'){
+    const d=new Date();
+    d.setHours(0,0,0,0);
+    url+=`&played_at=gte.${encodeURIComponent(d.toISOString())}`;
+  }else if(mode==='week'){
+    const d=new Date();
+    d.setHours(0,0,0,0);
+    const day=(d.getDay()+6)%7;
+    d.setDate(d.getDate()-day);
+    url+=`&played_at=gte.${encodeURIComponent(d.toISOString())}`;
+  }
+
+  url+='&order=score.desc,avg_error.asc,perfect.desc,max_combo.desc,played_at.asc&limit=500';
+
+  const res=await fetch(url,{headers:sbHeaders()});
+  if(!res.ok){
+    const msg=await res.text();
+    throw new Error('rank fetch failed: '+msg);
+  }
+  return await res.json();
+}
+
+async function sbUploadAvatar(file){
+  if(!currentSession?.user?.id) throw new Error('login required');
+
+  const safe=(file.name||'avatar.jpg').replace(/[^a-zA-Z0-9._-]/g,'_');
+  const ext=safe.includes('.')?safe.split('.').pop():'jpg';
+  const fileName=`${currentSession.user.id}/${Date.now()}-${Math.random().toString(36).slice(2,8)}.${ext}`;
+
+  const {error}=await sb.storage.from('avatars').upload(fileName,file,{
+    cacheControl:'3600',
+    upsert:false
+  });
+  if(error) throw error;
+
+  const {data,error:signError}=await sb.storage.from('avatars').createSignedUrl(fileName,60*60*24);
+  if(signError) throw signError;
+
+  return {path:fileName,url:data.signedUrl};
+}
+
+let GAME_MS=60000;
+let MAX_TAPS=60;
+const MAX_COMBO_BONUS=50;
+
+function comboBonusFor(c){
+  if(c<2)return 0;
+  if(c<10)return (c-1)*2;                // 2~9: +2 ~ +16
+  if(c<20)return 18+(c-10)*2;            // 10~19: +18 ~ +36
+  if(c<30)return 40+(c-20);              // 20~29: +40 ~ +49
+  return 50;                              // 30+: +50
+}
+const STORAGE_PROFILE='msc_profile_60_v1';
+const STORAGE_SCORES='msc_scores_60_v1';
+
+let profile={nickname:'GUEST',avatar:''};
+let results=[],totalScore=0,currentCombo=0,maxCombo=0;
+let counts={Perfect:0,Excellent:0,Good:0,Bad:0,Miss:0};
+
+let gameStarted=false;
+let gameEnded=false;
+let gameArmed=false;
+let countdownTimer=null;
+let startPerf=0;
+let endTimer=null;
+let lastResultRecord=null;
+let preparedResultBlob=null;
+let resultCardPreparing=false;
+
+let audioCtx=null;
+let soundEnabled=true;
+let audioUnlocked=false;
+let tickTimer=null;
+let rankMode='all';
+let pendingAvatarFile=null;
+
+const clock=$('clock'),fill=$('fill'),timerEl=$('timer'),tapCount=$('tapCount'),scoreLive=$('scoreLive');
+const judge=$('judge'),error=$('error'),comboText=$('combo');
+const mae=$('mae'),bias=$('bias'),comboStat=$('comboStat'),maxComboStat=$('maxCombo');
+const resultOverlay=$('resultOverlay'),rankOverlay=$('rankOverlay'),profileOverlay=$('profileOverlay');
+const battleOverlay=$('battleOverlay'),battleResultOverlay=$('battleResultOverlay');
+
+const nowHi=()=>performance.timeOrigin+performance.now();
+const fmt=v=>(v>=0?'+':'')+(v/1000).toFixed(3)+' s';
+
+const defaultAvatar=()=>`data:image/svg+xml;charset=utf-8,${encodeURIComponent(
+'<svg xmlns="http://www.w3.org/2000/svg" width="100" height="100"><rect width="100%" height="100%" fill="#2b3038"/><circle cx="50" cy="38" r="18" fill="#7d8796"/><path d="M18 92c3-23 18-34 32-34s29 11 32 34" fill="#7d8796"/></svg>'
+)}`;
+
+function loadProfile(){
+  try{profile=JSON.parse(localStorage.getItem(STORAGE_PROFILE))||profile}catch{}
+  if(!profile.nickname)profile.nickname='GUEST';
+  updateProfileUI();
+}
+function saveProfile(){
+  localStorage.setItem(STORAGE_PROFILE,JSON.stringify(profile));
+  updateProfileUI();
+}
+function updateProfileUI(){
+  $('headerNick').textContent=profile.nickname;
+  $('headerAvatar').src=profile.avatar||defaultAvatar();
+  $('previewAvatar').src=profile.avatar||defaultAvatar();
+}
+function loadScores(){
+  try{return JSON.parse(localStorage.getItem(STORAGE_SCORES))||[]}catch{return[]}
+}
+function saveScoreRecord(record){
+  const arr=loadScores();arr.push(record);
+  localStorage.setItem(STORAGE_SCORES,JSON.stringify(arr.slice(-500)));
+}
+
+function getJudgement(abs){
+  if(abs<=15)return{name:'Perfect',score:100,color:'#63e6be'};
+  if(abs<=30)return{name:'Excellent',score:85,color:'#64b5f6'};
+  if(abs<=60)return{name:'Good',score:60,color:'#ffd166'};
+  if(abs<=120)return{name:'Bad',score:30,color:'#ff9b71'};
+  return{name:'Miss',score:0,color:'#ff5c70'};
+}
+
+function maxPossibleScore(){
+  return GAME_MS===30000?3780:7560;
+}
+
+function getGrade(score){
+  const pct=score/maxPossibleScore()*100;
+
+  if(pct>=99.0)return'SS+++';
+  if(pct>=97.0)return'SS++';
+  if(pct>=95.0)return'SS+';
+  if(pct>=92.0)return'SS';
+  if(pct>=88.0)return'S+';
+  if(pct>=84.0)return'S';
+  if(pct>=78.0)return'A+';
+  if(pct>=72.0)return'A';
+  if(pct>=65.0)return'B+';
+  if(pct>=58.0)return'B';
+  if(pct>=50.0)return'B-';
+  if(pct>=42.0)return'C';
+  if(pct>=32.0)return'D';
+  return'F';
+}
+
+function playTone(freq=1300,duration=.03,volume=.14,type='square',delay=0){
+  if(!audioCtx||audioCtx.state!=='running')return;
+  const o=audioCtx.createOscillator(),g=audioCtx.createGain();
+  const t=audioCtx.currentTime+delay;
+  o.type=type;o.frequency.value=freq;
+  g.gain.setValueAtTime(volume,t);
+  g.gain.exponentialRampToValueAtTime(.001,t+duration);
+  o.connect(g);g.connect(audioCtx.destination);
+  o.start(t);o.stop(t+duration+.01);
+}
+
+function playTick(){
+  if(!soundEnabled)return;
+  playTone(1300,.025,.11,'square');
+}
+
+function playFanfare(){
+  if(!audioCtx||audioCtx.state!=='running'||!soundEnabled)return;
+  [523,659,784,1047].forEach((f,i)=>playTone(f,.16,.12,'triangle',i*.10));
+  [784,988,1175,1568].forEach((f,i)=>playTone(f,.24,.09,'sine',.44+i*.055));
+}
+
+function playResultAudio(grade){
+  if(!soundEnabled)return;
+
+  const tier=resultTier(grade);
+  const audio=
+    tier==='A' ? $('resultAudioA') :
+    tier==='B' ? $('resultAudioB') :
+    $('resultAudioLow');
+
+  try{
+    [$('resultAudioA'),$('resultAudioB'),$('resultAudioLow')].forEach(a=>{
+      if(a!==audio){a.pause();a.currentTime=0;}
+    });
+
+    audio.currentTime=0;
+    const p=audio.play();
+    if(p && p.catch) p.catch(()=>{});
+  }catch(e){}
+}
+
+function playCheer(){
+  if(!audioCtx||audioCtx.state!=='running'||!soundEnabled)return;
+
+  const dur=1.55;
+  const sr=audioCtx.sampleRate;
+  const buffer=audioCtx.createBuffer(1,Math.floor(sr*dur),sr);
+  const data=buffer.getChannelData(0);
+
+  for(let i=0;i<data.length;i++){
+    const t=i/sr;
+    const attack=Math.min(1,t/0.07);
+    const decay=Math.max(0,1-t/dur);
+    const flutter=0.72+0.28*Math.sin(2*Math.PI*(7.5+2*Math.sin(t*4))*t);
+    data[i]=(Math.random()*2-1)*attack*Math.pow(decay,.45)*flutter;
+  }
+
+  const src=audioCtx.createBufferSource();
+  src.buffer=buffer;
+
+  const band=audioCtx.createBiquadFilter();
+  band.type='bandpass';
+  band.frequency.value=1150;
+  band.Q.value=.65;
+
+  const gain=audioCtx.createGain();
+  const now=audioCtx.currentTime+.08;
+  gain.gain.setValueAtTime(.0001,now);
+  gain.gain.exponentialRampToValueAtTime(.20,now+.08);
+  gain.gain.exponentialRampToValueAtTime(.055,now+1.20);
+  gain.gain.exponentialRampToValueAtTime(.0001,now+dur);
+
+  src.connect(band);
+  band.connect(gain);
+  gain.connect(audioCtx.destination);
+  src.start(now);
+  src.stop(now+dur);
+
+  // crowd-like rising voices
+  [360,430,520,610,720].forEach((f,i)=>{
+    const o=audioCtx.createOscillator();
+    const g=audioCtx.createGain();
+    const t0=now+.02+i*.035;
+    o.type='sawtooth';
+    o.frequency.setValueAtTime(f,t0);
+    o.frequency.exponentialRampToValueAtTime(f*1.35,t0+.55);
+    g.gain.setValueAtTime(.0001,t0);
+    g.gain.exponentialRampToValueAtTime(.018,t0+.05);
+    g.gain.exponentialRampToValueAtTime(.0001,t0+.75);
+    o.connect(g);g.connect(audioCtx.destination);
+    o.start(t0);o.stop(t0+.78);
+  });
+}
+
+function unlockAudioFromGesture(){
+  if(!soundEnabled)return;
+
+  try{
+    if(!audioCtx){
+      audioCtx=new(window.AudioContext||window.webkitAudioContext)();
+    }
+
+    if(audioCtx.state==='suspended'){
+      audioCtx.resume();
+    }
+
+    // iOS Safari unlock: create and start a silent buffer immediately
+    const buffer=audioCtx.createBuffer(1,1,22050);
+    const source=audioCtx.createBufferSource();
+    const gain=audioCtx.createGain();
+    gain.gain.value=0.00001;
+    source.buffer=buffer;
+    source.connect(gain);
+    gain.connect(audioCtx.destination);
+    source.start(0);
+
+    if(!audioUnlocked){
+      audioUnlocked=true;
+      $('soundBtn').classList.add('on');
+      scheduleNextTick();
+    }
+  }catch(e){}
+}
+
+async function ensureAudio(){
+  unlockAudioFromGesture();
+}
+
+async function startSound(){
+  soundEnabled=true;
+  unlockAudioFromGesture();
+  $('soundBtn').classList.add('on');
+}
+
+function stopSound(){
+  soundEnabled=false;
+  clearTimeout(tickTimer);
+  $('soundBtn').classList.remove('on');
+}
+
+function scheduleNextTick(){
+  clearTimeout(tickTimer);
+  if(!soundEnabled||!audioUnlocked)return;
+  const delay=1000-(Date.now()%1000);
+  tickTimer=setTimeout(()=>{playTick();scheduleNextTick()},delay);
+}
+
+function resultTier(grade){
+  if(['SS+++','SS++','SS+','SS','S+','S','A+','A'].includes(grade)) return 'A';
+  if(['B+','B'].includes(grade)) return 'B';
+  return 'LOW';
+}
+
+async function unlockResultAudios(){
+  const audios=[$('resultAudioA'),$('resultAudioB'),$('resultAudioLow')];
+
+  for(const a of audios){
+    try{
+      a.muted=true;
+      a.currentTime=0;
+      const p=a.play();
+      if(p && p.catch) p.catch(()=>{});
+      a.pause();
+      a.currentTime=0;
+      a.muted=false;
+    }catch(e){}
+  }
+}
+
+async function armGame(){
+  if(gameStarted||gameEnded||gameArmed)return;
+
+  gameArmed=true;
+  $('startBtn').classList.add('hidden');
+  $('countdown').textContent='3';
+  judge.textContent='GET READY';
+  judge.style.color='#f4f5f7';
+  error.textContent='';
+
+  soundEnabled=true;
+  unlockAudioFromGesture();
+  await unlockResultAudios();
+  $('soundBtn').classList.add('on');
+
+  let n=3;
+
+  countdownTimer=setInterval(()=>{
+    n--;
+
+    if(n>0){
+      $('countdown').textContent=String(n);
+      return;
+    }
+
+    if(n===0){
+      $('countdown').textContent='GO!';
+      return;
+    }
+
+    clearInterval(countdownTimer);
+    $('countdown').textContent='';
+    gameArmed=false;
+    startGame();
+  },700);
+}
+
+function startGame(){
+  if(gameStarted||gameEnded)return;
+  gameStarted=true;
+  startPerf=performance.now();
+  timerEl.textContent=(GAME_MS/1000).toFixed(1);
+  judge.textContent='GO!';
+  error.textContent='n.000에 맞춰 탭';
+  endTimer=setTimeout(endGame,GAME_MS);
+}
+
+function updateStats(){
+  tapCount.textContent=results.length+' / '+MAX_TAPS+' TAP';
+  scoreLive.textContent=totalScore+'점';
+  comboStat.textContent=currentCombo;
+  maxComboStat.textContent=maxCombo;
+
+  if(!results.length){
+    mae.textContent='—';bias.textContent='—';return;
+  }
+
+  const m=results.reduce((a,v)=>a+Math.abs(v),0)/results.length;
+  const b=results.reduce((a,v)=>a+v,0)/results.length;
+  mae.textContent=(m/1000).toFixed(3)+' s';
+  bias.textContent=fmt(b);
+}
+
+function record(){
+  if(gameEnded||!gameStarted)return;
+  if(results.length>=MAX_TAPS){endGame();return}
+
+  const elapsed=performance.now()-startPerf;
+  if(elapsed>=GAME_MS){endGame();return}
+
+  const frac=nowHi()%1000;
+  const delta=frac<500?frac:frac-1000;
+  const j=getJudgement(Math.abs(delta));
+
+  results.push(delta);
+  counts[j.name]++;
+
+  let comboBonus=0;
+
+  if(j.name==='Perfect'||j.name==='Excellent'){
+    currentCombo++;
+    if(currentCombo>maxCombo)maxCombo=currentCombo;
+
+    if(currentCombo>=2){
+      comboBonus=comboBonusFor(currentCombo);
+    }
+  }else{
+    currentCombo=0;
+  }
+
+  totalScore=Math.min(maxPossibleScore(),totalScore+j.score+comboBonus);
+
+  judge.textContent=j.name;
+  judge.style.color=j.color;
+  error.textContent=comboBonus>0
+    ? `${fmt(delta)}  +${comboBonus} COMBO BONUS`
+    : fmt(delta);
+
+  comboText.textContent=currentCombo>=2?currentCombo+' COMBO':'';
+  updateStats();
+
+  if(results.length>=MAX_TAPS){
+    setTimeout(endGame,160);
+  }
+}
+
+function endGame(){
+  if(gameEnded)return;
+  gameEnded=true;
+  gameStarted=false;
+  clearTimeout(endTimer);
+  timerEl.textContent='0.0';
+
+  const taps=results.length;
+  const grade=getGrade(totalScore);
+  const avgAbs=taps?results.reduce((a,v)=>a+Math.abs(v),0)/taps:0;
+  const now=new Date();
+
+  lastResultRecord={
+    id:Date.now()+'-'+Math.random(),
+    user_id:currentSession?.user?.id||null,
+    nickname:profile.nickname,
+    avatar:profile.avatar||'',
+    score:totalScore,
+    grade,
+    avg_error:+avgAbs.toFixed(2),
+    max_combo:maxCombo,
+    taps,
+    perfect:counts.Perfect,
+    excellent:counts.Excellent,
+    good:counts.Good,
+    bad:counts.Bad,
+    miss:counts.Miss,
+    played_at:now.toISOString()
+  };
+
+  if(GAME_MS===60000)saveScoreRecord(lastResultRecord);
+
+  if(GAME_MS===60000 && !guestMode){
+    sbInsertScore(lastResultRecord).catch(err=>{
+      console.warn(err);
+    });
+  }
+
+  if(battleState.active){
+    submitBattleResult(lastResultRecord).catch(err=>console.warn(err));
+  }
+
+  $('resultAvatar').src=profile.avatar||defaultAvatar();
+  $('finalGrade').textContent=grade;
+  $('resultNick').textContent=profile.nickname;
+  $('finalScore').textContent=totalScore;
+  $('maxScoreLabel').textContent=maxPossibleScore();
+  $('resultDurationLabel').textContent=`${GAME_MS/1000} SECOND RESULT`;
+  $('resultMeta').textContent=
+    `${now.toLocaleString('ko-KR')} · MAX ${maxPossibleScore()} pts`+
+    (GAME_MS===30000?' · PRACTICE':'');
+  $('resultMae').textContent=(avgAbs/1000).toFixed(3)+' s';
+  $('resultCombo').textContent=maxCombo;
+  $('resultTaps').textContent=taps;
+  $('perfectRate').textContent=(taps?(counts.Perfect/taps*100):0).toFixed(1)+'%';
+
+  $('breakdown').innerHTML=
+    `<span style="color:#63e6be">Perfect</span> ${counts.Perfect}<br>`+
+    `<span style="color:#64b5f6">Excellent</span> ${counts.Excellent}<br>`+
+    `<span style="color:#ffd166">Good</span> ${counts.Good}<br>`+
+    `<span style="color:#ff9b71">Bad</span> ${counts.Bad}<br>`+
+    `<span style="color:#ff5c70">Miss</span> ${counts.Miss}`;
+
+  // 공유용 PNG는 사용자가 공유 버튼을 누르기 전에 미리 생성한다.
+  // iOS Safari의 'transient user activation' 제한 때문에 이 순서가 중요하다.
+  prepareResultCard();
+
+  if(!battleState.active){
+    launchCelebration(grade);
+    const tier=resultTier(grade);
+    setTimeout(()=>resultOverlay.classList.add('show'),tier==='LOW'?720:420);
+  }
+}
+
+function resetGame(){
+  clearTimeout(endTimer);
+  results=[];totalScore=0;currentCombo=0;maxCombo=0;
+  preparedResultBlob=null;
+  resultCardPreparing=false;
+  counts={Perfect:0,Excellent:0,Good:0,Bad:0,Miss:0};
+  gameStarted=false;gameEnded=false;gameArmed=false;startPerf=0;
+  clearInterval(countdownTimer);
+  judge.textContent='READY';judge.style.color='#f4f5f7';
+  error.textContent='START를 누르면 3·2·1 후 시작';
+  $('countdown').textContent='';
+  comboText.textContent='';
+  timerEl.textContent=(GAME_MS/1000).toFixed(1);
+  $('startBtn').classList.remove('hidden');
+  if(battleState.active)$('startBtn').style.display='none';
+  resultOverlay.classList.remove('show');
+  updateStats();
+}
+
+function continueGame(){
+  resultOverlay.classList.remove('show');
+  resetGame();
+}
+
+function launchCelebration(grade){
+  const tier=resultTier(grade);
+  playResultAudio(grade);
+
+  const fan=$('fanfareText');
+  fan.textContent=
+    tier==='A' ? 'AMAZING!' :
+    tier==='B' ? 'NICE!' :
+    '...';
+
+  fan.classList.remove('show');
+  void fan.offsetWidth;
+  fan.classList.add('show');
+
+  if(tier==='LOW'){
+    const shade=$('lowFailFlash');
+    shade.classList.remove('show');
+    void shade.offsetWidth;
+    shade.classList.add('show');
+
+    // Result card appears with a deliberately weak, awkward wobble while the crowd laughs.
+    setTimeout(()=>{
+      const modal=$('resultOverlay').querySelector('.modal');
+      if(modal){
+        modal.classList.remove('resultLowWobble');
+        void modal.offsetWidth;
+        modal.classList.add('resultLowWobble');
+      }
+    },520);
+  }
+
+  const canvas=$('fxCanvas');
+  const ctx=canvas.getContext('2d');
+  const dpr=Math.max(1,window.devicePixelRatio||1);
+  const w=window.innerWidth,h=window.innerHeight;
+
+  canvas.width=w*dpr;
+  canvas.height=h*dpr;
+  canvas.style.width=w+'px';
+  canvas.style.height=h+'px';
+  ctx.setTransform(dpr,0,0,dpr,0,0);
+
+  const colors=['#63e6be','#64b5f6','#ffd166','#ff9b71','#ff5c70','#ffffff'];
+  const particles=[];
+
+  const confettiCount=tier==='A'?220:tier==='B'?90:0;
+  const fireworkBursts=tier==='A'?7:tier==='B'?3:0;
+  const burstPieces=tier==='A'?34:tier==='B'?22:0;
+
+  for(let i=0;i<confettiCount;i++){
+    const fromLeft=Math.random()<.5;
+    particles.push({
+      x:fromLeft?-10:w+10,
+      y:h*(.55+Math.random()*.28),
+      vx:(fromLeft?1:-1)*
+         (tier==='A'?(3+Math.random()*8):tier==='B'?(2+Math.random()*5):(1+Math.random()*2)),
+      vy:tier==='A'?(-7-Math.random()*11):tier==='B'?(-5-Math.random()*7):(-2-Math.random()*2),
+      g:tier==='A'?(.22+Math.random()*.12):tier==='B'?(.25+Math.random()*.10):(.30+Math.random()*.08),
+      rot:Math.random()*Math.PI,
+      vr:(Math.random()-.5)*.3,
+      size:4+Math.random()*7,
+      color:colors[(Math.random()*colors.length)|0],
+      life:tier==='A'?(130+Math.random()*90):(90+Math.random()*70)
+    });
+  }
+
+  for(let b=0;b<fireworkBursts;b++){
+    const cx=w*(.15+Math.random()*.7);
+    const cy=h*(.14+Math.random()*.35);
+    const baseColor=colors[(Math.random()*colors.length)|0];
+
+    for(let i=0;i<burstPieces;i++){
+      const a=Math.PI*2*i/burstPieces;
+      const sp=tier==='A'?(3+Math.random()*5):(2.2+Math.random()*3.8);
+
+      particles.push({
+        x:cx,y:cy,
+        vx:Math.cos(a)*sp,
+        vy:Math.sin(a)*sp,
+        g:.03,
+        rot:0,vr:0,
+        size:2.5+Math.random()*2.8,
+        color:baseColor,
+        life:tier==='A'?(90+Math.random()*40):(70+Math.random()*30)
+      });
+    }
+  }
+
+  let frame=0;
+
+  function draw(){
+    ctx.clearRect(0,0,w,h);
+    let alive=0;
+
+    for(const p of particles){
+      if(p.life<=0)continue;
+      alive++;
+
+      p.x+=p.vx;
+      p.y+=p.vy;
+      p.vy+=p.g;
+      p.rot+=p.vr;
+      p.life--;
+
+      ctx.save();
+      ctx.translate(p.x,p.y);
+      ctx.rotate(p.rot);
+      ctx.globalAlpha=Math.min(1,p.life/25);
+      ctx.fillStyle=p.color;
+      ctx.fillRect(-p.size/2,-p.size/2,p.size,p.size*.65);
+      ctx.restore();
+    }
+
+    frame++;
+
+    if(alive&&frame<240){
+      requestAnimationFrame(draw);
+    }else{
+      ctx.clearRect(0,0,w,h);
+    }
+  }
+
+  draw();
+}
+
+function startOfToday(){
+  const d=new Date();d.setHours(0,0,0,0);return d;
+}
+function startOfWeek(){
+  const d=new Date();d.setHours(0,0,0,0);
+  const day=(d.getDay()+6)%7;d.setDate(d.getDate()-day);return d;
+}
+function bestPerNickname(records){
+  const map=new Map();
+  for(const r of records){
+    const key=r.user_id||((r.nickname||'GUEST').trim().toLowerCase());
+    const old=map.get(key);
+    if(!old||r.score>old.score||(r.score===old.score&&r.avg_error<old.avg_error))map.set(key,r);
+  }
+  return[...map.values()];
+}
+async function renderRank(){
+  const list=$('rankList');
+  list.innerHTML='<div class="empty">랭킹 불러오는 중...</div>';
+
+  let arr=[];
+
+  try{
+    arr=await sbFetchScores(rankMode);
+
+    arr=arr.map(r=>({
+      ...r,
+      avatar:r.avatar_url||'',
+      avg_error:Number(r.avg_error)*1000
+    }));
+  }catch(err){
+    console.warn(err);
+
+    // 온라인 연결이 실패하면 이 기기 기록이라도 표시
+    arr=loadScores();
+
+    const cutoff=
+      rankMode==='today'
+      ? startOfToday()
+      : rankMode==='week'
+      ? startOfWeek()
+      : null;
+
+    if(cutoff){
+      arr=arr.filter(r=>new Date(r.played_at)>=cutoff);
+    }
+  }
+
+  arr=bestPerNickname(arr).sort((a,b)=>
+    b.score-a.score||
+    a.avg_error-b.avg_error||
+    b.perfect-a.perfect||
+    b.max_combo-a.max_combo||
+    new Date(a.played_at)-new Date(b.played_at)
+  );
+
+  list.innerHTML='';
+
+  if(!arr.length){
+    list.innerHTML='<div class="empty">아직 기록이 없습니다.</div>';
+    return;
+  }
+
+  arr.slice(0,100).forEach((r,i)=>{
+    const row=document.createElement('div');
+    row.className=
+      'rankRow'+
+      ((r.nickname||'').toLowerCase()===profile.nickname.toLowerCase()?' me':'');
+
+    const date=new Date(r.played_at);
+
+    row.innerHTML=
+      `<div class="rankNo">${i+1}</div>`+
+      `<img class="rankAvatar" src="${r.avatar||defaultAvatar()}" alt="">`+
+      `<div>`+
+        `<div class="rankName">${escapeHtml(r.nickname||'GUEST')}</div>`+
+        `<div class="rankDate">${date.toLocaleDateString('ko-KR')} ${date.toLocaleTimeString('ko-KR',{hour:'2-digit',minute:'2-digit'})}</div>`+
+      `</div>`+
+      `<div class="rankScore">${r.score}<div class="rankGrade">${r.grade}</div></div>`;
+
+    list.appendChild(row);
+  });
+}
+
+function escapeHtml(s){
+  return String(s).replace(/[&<>"']/g,m=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#039;'}[m]));
+}
+
+function roundedRect(ctx,x,y,w,h,r){
+  const rr=Math.min(r,w/2,h/2);
+  ctx.beginPath();
+  ctx.moveTo(x+rr,y);
+  ctx.arcTo(x+w,y,x+w,y+h,rr);
+  ctx.arcTo(x+w,y+h,x,y+h,rr);
+  ctx.arcTo(x,y+h,x,y,rr);
+  ctx.arcTo(x,y,x+w,y,rr);
+  ctx.closePath();
+}
+
+function loadImage(src){
+  return new Promise((resolve,reject)=>{
+    const img=new Image();
+
+    // Supabase Storage 이미지도 canvas에 안전하게 그릴 수 있게 CORS 모드 사용
+    if(/^https?:\/\//i.test(src)){
+      img.crossOrigin='anonymous';
+    }
+
+    img.onload=()=>resolve(img);
+    img.onerror=reject;
+    img.src=src;
+  });
+}
+
+async function buildResultCardBlob(){
+  if(!lastResultRecord)return null;
+  const r=lastResultRecord;
+
+  const W=1080,H=1350;
+  const c=document.createElement('canvas');
+  c.width=W;c.height=H;
+  const ctx=c.getContext('2d');
+
+  // background
+  const bg=ctx.createLinearGradient(0,0,W,H);
+  bg.addColorStop(0,'#0d1117');
+  bg.addColorStop(.55,'#171d27');
+  bg.addColorStop(1,'#0c1016');
+  ctx.fillStyle=bg;
+  ctx.fillRect(0,0,W,H);
+
+  // glow
+  const glow=ctx.createRadialGradient(W*.5,310,20,W*.5,310,430);
+  glow.addColorStop(0,'rgba(99,230,190,.22)');
+  glow.addColorStop(.45,'rgba(100,181,246,.10)');
+  glow.addColorStop(1,'rgba(0,0,0,0)');
+  ctx.fillStyle=glow;
+  ctx.fillRect(0,0,W,H);
+
+  // outer card
+  roundedRect(ctx,54,54,W-108,H-108,42);
+  ctx.fillStyle='rgba(18,22,29,.92)';
+  ctx.fill();
+  ctx.strokeStyle='rgba(255,255,255,.10)';
+  ctx.lineWidth=2;
+  ctx.stroke();
+
+  ctx.textAlign='center';
+  ctx.fillStyle='#9aa5b4';
+  ctx.font='800 32px system-ui,-apple-system,sans-serif';
+  ctx.fillText('MILLISECOND CHALLENGE',W/2,128);
+
+  const line=ctx.createLinearGradient(340,0,740,0);
+  line.addColorStop(0,'#63e6be');
+  line.addColorStop(.5,'#64b5f6');
+  line.addColorStop(1,'#b48cff');
+  ctx.fillStyle=line;
+  roundedRect(ctx,390,154,300,8,4);
+  ctx.fill();
+
+  // avatar
+  const avatarSrc=r.avatar||defaultAvatar();
+  try{
+    const img=await loadImage(avatarSrc);
+    ctx.save();
+    ctx.beginPath();
+    ctx.arc(W/2,320,110,0,Math.PI*2);
+    ctx.clip();
+    ctx.drawImage(img,W/2-110,210,220,220);
+    ctx.restore();
+  }catch{
+    ctx.fillStyle='#2b3038';
+    ctx.beginPath();ctx.arc(W/2,320,110,0,Math.PI*2);ctx.fill();
+  }
+  ctx.strokeStyle='rgba(255,255,255,.88)';
+  ctx.lineWidth=6;
+  ctx.beginPath();ctx.arc(W/2,320,110,0,Math.PI*2);ctx.stroke();
+
+  // grade badge
+  const gx=W/2+115,gy=365;
+  const gg=ctx.createLinearGradient(gx-80,gy-40,gx+80,gy+40);
+  gg.addColorStop(0,'#63e6be');gg.addColorStop(.55,'#64b5f6');gg.addColorStop(1,'#b48cff');
+  roundedRect(ctx,gx-92,gy-44,184,88,24);
+  ctx.fillStyle=gg;ctx.fill();
+  ctx.strokeStyle='#ffffff';ctx.lineWidth=4;ctx.stroke();
+  ctx.fillStyle='#081018';
+  ctx.font='1000 38px system-ui,-apple-system,sans-serif';
+  ctx.fillText(r.grade,gx,gy+13);
+
+  // nickname
+  ctx.fillStyle='#ffffff';
+  ctx.font='1000 42px system-ui,-apple-system,sans-serif';
+  ctx.fillText(r.nickname,W/2,500);
+
+  // score
+  const sg=ctx.createLinearGradient(260,0,820,0);
+  sg.addColorStop(0,'#ffffff');sg.addColorStop(.48,'#63e6be');sg.addColorStop(1,'#64b5f6');
+  ctx.fillStyle=sg;
+  ctx.font='1000 66px system-ui,-apple-system,sans-serif';
+  ctx.fillText(`${r.score} / ${maxPossibleScore()}`,W/2,585);
+
+  ctx.fillStyle='#8691a0';
+  ctx.font='700 25px system-ui,-apple-system,sans-serif';
+  ctx.fillText('POINTS',W/2,622);
+
+  // stat boxes
+  const boxes=[
+    ['AVG ERROR',`${(r.avg_error/1000).toFixed(3)} s`],
+    ['MAX COMBO',String(r.max_combo)],
+    ['TOTAL TAP',String(r.taps)],
+    ['PERFECT',String(r.perfect)]
+  ];
+
+  const bx=120,by=690,bw=390,bh=118,gapX=60,gapY=26;
+  boxes.forEach((item,i)=>{
+    const col=i%2,row=Math.floor(i/2);
+    const x=bx+col*(bw+gapX),y=by+row*(bh+gapY);
+    roundedRect(ctx,x,y,bw,bh,24);
+    ctx.fillStyle='#11161e';ctx.fill();
+    ctx.strokeStyle='rgba(255,255,255,.06)';ctx.lineWidth=2;ctx.stroke();
+    ctx.fillStyle='#7f8996';ctx.font='700 22px system-ui,-apple-system,sans-serif';
+    ctx.fillText(item[0],x+bw/2,y+38);
+    ctx.fillStyle='#ffffff';ctx.font='1000 38px system-ui,-apple-system,sans-serif';
+    ctx.fillText(item[1],x+bw/2,y+84);
+  });
+
+  // judgement breakdown
+  roundedRect(ctx,120,1000,840,220,28);
+  ctx.fillStyle='#11161e';ctx.fill();
+  ctx.strokeStyle='rgba(255,255,255,.06)';ctx.lineWidth=2;ctx.stroke();
+
+  const items=[
+    ['Perfect',r.perfect,'#63e6be'],
+    ['Excellent',r.excellent,'#64b5f6'],
+    ['Good',r.good,'#ffd166'],
+    ['Bad',r.bad,'#ff9b71'],
+    ['Miss',r.miss,'#ff5c70']
+  ];
+  const startX=190;
+  items.forEach((it,i)=>{
+    const x=startX+i*165;
+    ctx.fillStyle=it[2];
+    ctx.font='900 22px system-ui,-apple-system,sans-serif';
+    ctx.fillText(it[0],x,1060);
+    ctx.fillStyle='#ffffff';
+    ctx.font='1000 34px system-ui,-apple-system,sans-serif';
+    ctx.fillText(String(it[1]),x,1110);
+  });
+
+  const date=new Date(r.played_at);
+  ctx.fillStyle='#707b89';
+  ctx.font='700 22px system-ui,-apple-system,sans-serif';
+  ctx.fillText(date.toLocaleString('ko-KR'),W/2,1280);
+
+  return await new Promise(resolve=>c.toBlob(resolve,'image/png',1));
+}
+
+async function prepareResultCard(){
+  preparedResultBlob=null;
+  resultCardPreparing=true;
+
+  const btn=$('share');
+  if(btn){
+    btn.disabled=true;
+    btn.textContent='카드 준비 중...';
+  }
+
+  try{
+    preparedResultBlob=await buildResultCardBlob();
+  }catch(err){
+    console.warn('result card prepare failed',err);
+    preparedResultBlob=null;
+  }finally{
+    resultCardPreparing=false;
+
+    if(btn){
+      btn.disabled=false;
+      btn.textContent='결과 카드 공유';
+    }
+  }
+}
+
+function shareScore(){
+  if(!lastResultRecord)return;
+
+  const r=lastResultRecord;
+
+  const text=
+`⏱️ MILLISECOND CHALLENGE
+${r.nickname} · ${r.grade}
+${r.score} / ${maxPossibleScore()} pts
+AVG ${(r.avg_error/1000).toFixed(3)} s · MAX COMBO ${r.max_combo}`;
+
+  const safeNick=(r.nickname||'player').replace(/[\\/:*?"<>|]/g,'_');
+  const filename=`millisecond-${safeNick}-${r.score}.png`;
+
+  // 중요: iPhone Safari의 Web Share는 클릭 순간의 사용자 제스처가 살아있어야 한다.
+  // 그래서 PNG는 결과창이 뜰 때 미리 생성해 두고, 클릭 시에는 바로 navigator.share를 호출한다.
+  if(preparedResultBlob){
+    const file=new File([preparedResultBlob],filename,{type:'image/png'});
+
+    try{
+      if(
+        navigator.share &&
+        navigator.canShare &&
+        navigator.canShare({files:[file]})
+      ){
+        navigator.share({
+          title:'Millisecond Challenge',
+          text,
+          files:[file]
+        }).catch(err=>{
+          if(err && err.name!=='AbortError'){
+            console.warn('file share failed',err);
+          }
+        });
+        return;
+      }
+    }catch(err){
+      console.warn('file share unavailable',err);
+    }
+
+    // 파일 공유 미지원 브라우저는 이미지를 즉시 새 탭으로 연다.
+    try{
+      const url=URL.createObjectURL(preparedResultBlob);
+      const win=window.open(url,'_blank');
+
+      if(win){
+        setTimeout(()=>URL.revokeObjectURL(url),60000);
+        return;
+      }
+
+      const a=document.createElement('a');
+      a.href=url;
+      a.download=filename;
+      document.body.appendChild(a);
+      a.click();
+      a.remove();
+      setTimeout(()=>URL.revokeObjectURL(url),60000);
+      return;
+    }catch(err){
+      console.warn('image fallback failed',err);
+    }
+  }
+
+  // 이미지 생성이 아직 안 됐거나 실패했다면 텍스트 공유라도 즉시 호출.
+  try{
+    if(navigator.share){
+      navigator.share({
+        title:'Millisecond Challenge',
+        text
+      }).catch(err=>{
+        if(err && err.name!=='AbortError'){
+          console.warn('text share failed',err);
+        }
+      });
+      return;
+    }
+  }catch(err){
+    console.warn('share unavailable',err);
+  }
+
+  navigator.clipboard?.writeText(text)
+    .then(()=>alert('결과 텍스트를 복사했습니다.'))
+    .catch(()=>alert(text));
+}
+
+function updateClock(){
+  const n=nowHi(),d=new Date(n),ms=Math.floor(n%1000);
+  clock.textContent=
+    String(d.getHours()).padStart(2,'0')+':'+
+    String(d.getMinutes()).padStart(2,'0')+':'+
+    String(d.getSeconds()).padStart(2,'0')+'.'+String(ms).padStart(3,'0');
+  fill.style.width=(ms/10)+'%';
+
+  if(gameStarted&&!gameEnded){
+    const remain=Math.max(0,GAME_MS-(performance.now()-startPerf));
+    timerEl.textContent=(remain/1000).toFixed(1);
+    if(remain<=0)endGame();
+  }
+  requestAnimationFrame(updateClock);
+}
+
+
+
+
+/* ONLINE MEMBERS + DIRECT INVITES */
+
+async function touchPresence(){
+  if(!currentSession?.user?.id || guestMode)return;
+  const nickname=profile.nickname||memberProfile?.nickname||memberProfile?.username||'MEMBER';
+  await sb.from('user_presence').upsert({
+    user_id:currentSession.user.id,
+    nickname,
+    last_seen:new Date().toISOString()
+  },{onConflict:'user_id'});
+}
+
+async function startPresence(){
+  if(!currentSession?.user?.id || guestMode)return;
+  clearInterval(presenceTimer);
+  await touchPresence().catch(()=>{});
+  presenceTimer=setInterval(()=>touchPresence().catch(()=>{}),15000);
+}
+
+function stopPresence(){
+  clearInterval(presenceTimer);
+  presenceTimer=null;
+}
+
+async function fetchOnlineMembers(){
+  if(!currentSession?.user?.id)return [];
+  const since=new Date(Date.now()-60000).toISOString();
+  const {data,error}=await sb.from('user_presence')
+    .select('user_id,nickname,last_seen')
+    .gte('last_seen',since)
+    .neq('user_id',currentSession.user.id)
+    .order('last_seen',{ascending:false});
+  if(error)throw error;
+  return data||[];
+}
+
+function onlineRowHtml(u,mode){
+  const safeName=escapeHtml(u.nickname||'MEMBER');
+  return `<div class="onlineRow">
+    <span class="onlineDot"></span>
+    <div class="onlineName">${safeName}</div>
+    <button class="inviteMini" data-invite-user="${u.user_id}" data-invite-mode="${mode}">초대</button>
+  </div>`;
+}
+
+async function renderOnlineList(targetId,mode){
+  const el=$(targetId);
+  if(!el)return;
+  if(!currentSession?.user?.id){
+    el.innerHTML='<div class="small">회원 로그인 후 사용할 수 있습니다.</div>';
+    return;
+  }
+  try{
+    const users=await fetchOnlineMembers();
+    el.innerHTML=users.length
+      ? users.map(u=>onlineRowHtml(u,mode)).join('')
+      : '<div class="small">현재 접속 중인 다른 회원이 없습니다.</div>';
+
+    el.querySelectorAll('[data-invite-user]').forEach(btn=>{
+      btn.onclick=async e=>{
+        e.stopPropagation();
+        btn.disabled=true;
+        try{
+          await inviteOnlineUser(btn.dataset.inviteUser,btn.dataset.inviteMode);
+          btn.textContent='보냄';
+          setTimeout(()=>{btn.disabled=false;btn.textContent='초대'},1600);
+        }catch(err){
+          btn.disabled=false;
+          alert(err.message||'초대에 실패했습니다.');
+        }
+      };
+    });
+  }catch(err){
+    el.innerHTML='<div class="small">온라인 목록을 불러오지 못했습니다.</div>';
+  }
+}
+
+async function refreshAllOnlineLists(){
+  const jobs=[];
+  if($('battleOverlay')?.classList.contains('show')){
+    jobs.push(renderOnlineList('battleOnlineList','battle'));
+    jobs.push(renderOnlineList('battleRoomOnlineList','battle'));
+  }
+  if($('dbBattleOverlay')?.classList.contains('show')){
+    jobs.push(renderOnlineList('dbOnlineList','dbsim'));
+    jobs.push(renderOnlineList('dbRoomOnlineList','dbsim'));
+  }
+  await Promise.all(jobs);
+}
+
+async function ensureInviteRoom(mode){
+  if(mode==='battle'){
+    if(!battleState.active||!battleState.room){
+      await createBattleRoom();
+    }
+    return battleState.room;
+  }
+
+  if(mode==='dbsim'){
+    if(!dbBattleState.active||!dbBattleState.room){
+      await createDbBattleRoom();
+    }
+    return dbBattleState.room;
+  }
+
+  throw new Error('알 수 없는 모드입니다.');
+}
+
+async function inviteOnlineUser(toUserId,mode){
+  if(!currentSession?.user?.id)throw new Error('회원 로그인이 필요합니다.');
+  const room=await ensureInviteRoom(mode);
+  if(!room)throw new Error('방을 만들지 못했습니다.');
+
+  const fromName=profile.nickname||memberProfile?.nickname||memberProfile?.username||'MEMBER';
+
+  const {error}=await sb.from('game_invites').insert({
+    from_user_id:currentSession.user.id,
+    from_nickname:fromName,
+    to_user_id:toUserId,
+    mode,
+    room_code:room.code,
+    status:'pending',
+    expires_at:new Date(Date.now()+5*60*1000).toISOString()
+  });
+  if(error)throw error;
+
+  await refreshAllOnlineLists();
+}
+
+async function startInviteListener(){
+  if(!currentSession?.user?.id)return;
+  if(inviteChannel)await sb.removeChannel(inviteChannel);
+
+  inviteChannel=sb.channel(`game-invites-${currentSession.user.id}`)
+    .on('postgres_changes',{
+      event:'INSERT',
+      schema:'public',
+      table:'game_invites',
+      filter:`to_user_id=eq.${currentSession.user.id}`
+    },payload=>{
+      const inv=payload.new;
+      if(inv.status!=='pending')return;
+      if(new Date(inv.expires_at).getTime()<Date.now())return;
+      showIncomingInvite(inv);
+    })
+    .subscribe();
+
+  // 로그인 순간 이미 와 있던 미확인 초대 1개도 확인
+  const {data}=await sb.from('game_invites')
+    .select('*')
+    .eq('to_user_id',currentSession.user.id)
+    .eq('status','pending')
+    .gt('expires_at',new Date().toISOString())
+    .order('created_at',{ascending:false})
+    .limit(1);
+
+  if(data?.[0])showIncomingInvite(data[0]);
+}
+
+function showIncomingInvite(inv){
+  pendingGameInvite=inv;
+  $('gameInviteFrom').textContent=inv.from_nickname||'회원';
+  $('gameInviteMode').textContent=
+    inv.mode==='dbsim'
+      ? 'DB SIM MULTI에 초대했습니다.'
+      : 'BATTLE에 초대했습니다.';
+  $('gameInviteOverlay').classList.add('show');
+}
+
+async function acceptIncomingInvite(){
+  const inv=pendingGameInvite;
+  if(!inv)return;
+
+  await sb.from('game_invites').update({status:'accepted'})
+    .eq('id',inv.id)
+    .eq('to_user_id',currentSession.user.id);
+
+  $('gameInviteOverlay').classList.remove('show');
+
+  if(inv.mode==='battle'){
+    setMode('battle');
+    $('battleOverlay').classList.add('show');
+    $('battleCodeInput').value=inv.room_code;
+    await joinBattleRoom();
+  }else{
+    setMode('dbsim');
+    $('dbBattleOverlay').classList.add('show');
+    $('dbBattleCodeInput').value=inv.room_code;
+    await joinDbBattleRoom();
+  }
+
+  pendingGameInvite=null;
+}
+
+async function declineIncomingInvite(){
+  const inv=pendingGameInvite;
+  if(inv){
+    await sb.from('game_invites').update({status:'declined'})
+      .eq('id',inv.id)
+      .eq('to_user_id',currentSession.user.id);
+  }
+  pendingGameInvite=null;
+  $('gameInviteOverlay').classList.remove('show');
+}
+
+
+/* GAME MODES + BATTLE */
+
+function setDuration(sec){
+  if(gameStarted||gameArmed)return;
+  selectedDuration=sec;
+  GAME_MS=sec*1000;
+  MAX_TAPS=sec;
+  $('sec30Btn').classList.toggle('active',sec===30);
+  $('sec60Btn').classList.toggle('active',sec===60);
+  timerEl.textContent=sec.toFixed(1);
+  $('tapCount').textContent=`0 / ${MAX_TAPS} TAP`;
+  $('maxScoreLabel').textContent=maxPossibleScore();
+  if($('profileModeLabel'))$('profileModeLabel').textContent=`${sec} SECOND · ${sec} TAP CHALLENGE`;
+  const hint=document.querySelector('.hint');
+  if(hint){
+    hint.innerHTML=
+      'Perfect ±0.015 s · Excellent ±0.030 s · Good ±0.060 s · Bad ±0.120 s<br>'+
+      `Excellent 이상 콤보 보너스 · ${sec===60?'공식 랭킹 반영':'30초 연습/배틀은 공식 랭킹 미반영'} · 최대 ${maxPossibleScore()} pts`;
+  }
+}
+
+function setMode(mode){
+  if(dbSimState.active && mode!=='dbsim') resetDbSim();
+  currentMode=mode;
+  const battle=mode==='battle';
+  const dbsim=mode==='dbsim';
+  $('battleModeBtn').classList.toggle('active',battle);
+  $('dbSimModeBtn').classList.toggle('active',dbsim);
+  $('openBattleBtn').style.display=battle?'':'none';
+  $('normalGame').style.display=dbsim?'none':'';
+  $('dbSimPanel').classList.toggle('dbVisible',dbsim);
+  $('startBtn').style.display=battle?'none':'';
+  if(dbsim){
+    $('profileModeLabel').textContent='DB REQUEST · REAL SIMULATION';
+    updateDbPrepared();
+  }else{
+    $('profileModeLabel').textContent=`${selectedDuration} SECOND · ${selectedDuration} TAP CHALLENGE`;
+  }
+  if(battle && guestMode){
+    alert('배틀은 회원 로그인 후 이용할 수 있습니다.');
+    setMode('solo');
+
+  }
+}
+
+function enterGuestMode(){
+  guestMode=true;
+  currentSession=null;
+  memberProfile=null;
+  profile={nickname:'GUEST',avatar:''};
+  updateProfileUI();
+  $('memberGate').classList.add('hidden');
+  $('rankBtn').style.display='none';
+  $('adminInviteBtn').style.display='none';
+  $('logoutBtn').style.display='none';
+  $('profileBtn').style.display='none';
+  $('openBattleBtn').style.display='none';
+  $('inviteHint').textContent='게스트 기록은 랭킹에 저장되지 않습니다.';
+}
+
+
+function updateDbPrepared(){
+  const n=(profile?.nickname||memberProfile?.nickname||'GUEST').trim()||'GUEST';
+  $('dbPreparedMsg').textContent=`${n} 0 디비요청드립니다`;
+}
+
+function dbTimeLabel(ts){
+  const d=new Date(ts);
+  return `${String(d.getHours()).padStart(2,'0')}:${String(d.getMinutes()).padStart(2,'0')}:${String(d.getSeconds()).padStart(2,'0')}.${String(d.getMilliseconds()).padStart(3,'0')}`;
+}
+
+function addDbMessage(name,ts,isMe=false,customText=''){
+  const chat=$('dbChat');
+  const row=document.createElement('div');
+  row.className='dbMsg'+(isMe?' me':'');
+  row.dataset.ts=String(ts);
+  row.innerHTML=`<div class="dbName">${escapeHtml(name)}</div><div class="dbBubble">${escapeHtml(customText||`${name} 0 디비요청드립니다`)}</div><div class="dbTime">${dbTimeLabel(ts)}</div>`;
+  const children=[...chat.children];
+  const before=children.find(x=>Number(x.dataset.ts)>ts);
+  if(before)chat.insertBefore(row,before); else chat.appendChild(row);
+  chat.scrollTop=chat.scrollHeight;
+}
+
+function randn(){
+  let u=0,v=0;
+  while(!u)u=Math.random();
+  while(!v)v=Math.random();
+  return Math.sqrt(-2*Math.log(u))*Math.cos(2*Math.PI*v);
+}
+
+
+function dbSimNow(){
+  if(!dbSimState.simBaseReal)return Date.now();
+  return dbSimState.simBaseTs+(performance.now()-dbSimState.simBaseReal);
+}
+
+function seededRandom(seed){
+  let t=(Number(seed)||1)>>>0;
+  return function(){
+    t+=0x6D2B79F5;
+    let x=t;
+    x=Math.imul(x^(x>>>15),x|1);
+    x^=x+Math.imul(x^(x>>>7),x|61);
+    return ((x^(x>>>14))>>>0)/4294967296;
+  };
+}
+
+function makeDbBots(seed=null){
+  const names=[
+    '민수','예진','동현','건희','성우','정훈','태규','지수','문수','희주',
+    '경빈','경규','민성','주원','찬은','인성','승환','은우','정우진','기태',
+    '성민','창현','윤서','현준','신구A','민제','강현','훈','소희','재현',
+    '준호','도윤','서준','지훈','성민B','태현','우진','정민','현우','수빈',
+    '유진','지원','재민','서현','하준','승민','준영','지호','동현B','민석',
+    '현수','진우','상현','예성','정우','영훈','민규','하늘','도현','준수'
+  ];
+  const rnd=seed===null?Math.random:seededRandom(seed);
+
+  function normal(){
+    let u=0,v=0;
+    while(!u)u=rnd();
+    while(!v)v=rnd();
+    return Math.sqrt(-2*Math.log(u))*Math.cos(2*Math.PI*v);
+  }
+
+  return names.slice(0,60).map(name=>{
+    const r=rnd();
+    let offset,style='single',attempts=[];
+
+    if(r<0.15){
+      style='spam';
+      const center=-170+rnd()*120;
+      const count=3+((rnd()*5)|0);
+      const gap=12+rnd()*25;
+      for(let n=0;n<count;n++)attempts.push(Math.round(center+n*gap+normal()*10));
+      const valid=attempts.filter(ms=>ms>=-1000).sort((a,b)=>a-b);
+      offset=valid.length?valid[0]:Math.round(center);
+    }else if(r<0.35){
+      style='early';
+      offset=Math.round(-210+rnd()*120);
+      attempts=[offset];
+    }else if(r<0.80){
+      style='timed';
+      offset=Math.round(-100+rnd()*160);
+      attempts=[offset];
+    }else{
+      style='late';
+      offset=Math.round(35+rnd()*190);
+      attempts=[offset];
+    }
+
+    return {name,offset,style,attempts};
+  }).sort((a,b)=>a.offset-b.offset);
+}
+function clearDbTimers(){
+  dbSimState.timers.forEach(clearTimeout);
+  dbSimState.timers=[];
+  clearInterval(dbSimState.clockTimer);
+  dbSimState.clockTimer=null;
+}
+
+function resetDbSim(){
+  clearDbTimers();
+  dbSimState.active=false;
+  dbSimState.sent=false;
+  dbSimState.finished=false;
+  dbSimState.targetTs=0;
+  dbSimState.simBaseReal=0;
+  dbSimState.simBaseTs=0;
+  dbSimState.userOffset=null;
+  dbSimState.bots=[];
+  if($('dbChat'))$('dbChat').innerHTML='';
+  if($('dbResult'))$('dbResult').style.display='none';
+  if($('dbSimGuide'))$('dbSimGuide').textContent='START를 누르면 17:59:55부터 18:00:00 요청 상황을 재현합니다.';
+  if($('dbSendBtn')){ $('dbSendBtn').style.display=''; $('dbSendBtn').textContent='START'; }
+  if($('dbSimBattleBtn'))$('dbSimBattleBtn').style.display='';
+  if($('dbScoreTable'))$('dbScoreTable').innerHTML='';
+  if($('dbSendHint'))$('dbSendHint').textContent='시작 후 PC Enter / Space · 모바일 화면 터치 = 즉시 전송';
+  updateDbPrepared();
+}
+
+function startDbSim(){
+  if(dbSimState.active)return;
+  resetDbSim();
+  dbSimState.active=true;
+  dbSimState.bots=makeDbBots();
+  $('dbPeopleCount').textContent=`${dbSimState.bots.length+1}명`;
+  $('dbSendBtn').textContent='SEND';
+  $('dbSimClock').textContent='17:59:55.000';
+  $('dbSimGuide').textContent='가상시간 17:59:55.000 · 5초 뒤 18:00:00.000';
+  $('dbSendHint').textContent='PC Enter / Space 또는 SEND 버튼 = 즉시 전송';
+
+  // 실제 시간을 기다리지 않고 5초 뒤가 정확히 18:00:00.000이 되도록 가상 시계를 만든다.
+  // 실제 현재 시각과 완전히 무관한 가상 시계.
+  // START를 누르는 순간 = 17:59:55.000, 정확히 5초 뒤 = 18:00:00.000
+  const virtualStart=new Date(2000,0,1,17,59,55,0);
+  dbSimState.simBaseReal=performance.now();
+  dbSimState.simBaseTs=virtualStart.getTime();
+  dbSimState.targetTs=dbSimState.simBaseTs+5000;
+
+  // 실제 요청방처럼 직전 잡담/공지 몇 줄
+  addDbMessage('관리자',dbSimState.simBaseTs-8500,false,'18시 신규DB 요청 준비해주세요.');
+  addDbMessage('민수',dbSimState.simBaseTs-5200,false,'확인했습니다.');
+  addDbMessage('예진',dbSimState.simBaseTs-2800,false,'네');
+
+  dbSimState.clockTimer=setInterval(()=>{
+    const simNow=dbSimNow();
+    $('dbSimClock').textContent=dbTimeLabel(simNow);
+    const left=dbSimState.targetTs-simNow;
+
+    if(left>0){
+      $('dbSimGuide').textContent=`18:00 요청까지 ${(left/1000).toFixed(3)}초`;
+    }else if(!dbSimState.sent){
+      $('dbSimGuide').textContent='18:00:00.000 · NOW';
+    }
+  },16);
+
+  for(const bot of dbSimState.bots){
+    const delay=Math.max(0,(dbSimState.targetTs+bot.offset)-dbSimState.simBaseTs);
+    dbSimState.timers.push(setTimeout(()=>{
+      if(!dbSimState.active)return;
+      addDbMessage(bot.name,dbSimState.targetTs+bot.offset,false);
+    },delay));
+  }
+
+  dbSimState.timers.push(setTimeout(()=>{
+    if(dbSimState.active&&!dbSimState.sent){
+      $('dbSimGuide').textContent='아직 전송하지 않았습니다.';
+    }
+  },5600));
+}
+function sendDbRequest(){
+  if(currentMode!=='dbsim'||!dbSimState.active||dbSimState.sent)return false;
+  dbSimState.sent=true;
+  const ts=dbSimNow();
+  dbSimState.userOffset=ts-dbSimState.targetTs;
+  const n=(profile?.nickname||memberProfile?.nickname||'GUEST').trim()||'GUEST';
+  addDbMessage(n,ts,true);
+  $('dbSimGuide').textContent='전송 완료 · 결과 집계 중…';
+  $('dbSendHint').textContent='전송 완료';
+  const wait=Math.max(650,dbSimState.targetTs+420-Date.now());
+  dbSimState.timers.push(setTimeout(finishDbSim,wait));
+  return true;
+}
+
+function finishDbSim(){
+  if(!dbSimState.active||dbSimState.finished||dbSimState.userOffset===null)return;
+  dbSimState.finished=true;
+  clearInterval(dbSimState.clockTimer);
+
+  const all=[...dbSimState.bots.map(b=>({
+      name:b.name,
+      offset:Number(b.offset),
+      me:false
+    })),{
+      name:profile?.nickname||'GUEST',
+      offset:Number(dbSimState.userOffset),
+      me:true
+    }]
+    .sort((a,b)=>a.offset-b.offset);
+
+  // 18:00 이전 전송은 기록은 보여주되 순위에서는 제외.
+  let validRank=0;
+  const scored=all.map(x=>{
+    const valid=x.offset>=0;
+    if(valid)validRank++;
+    return {...x,valid,rank:valid?validRank:null};
+  });
+
+  const mine=scored.find(x=>x.me);
+  const validTotal=scored.filter(x=>x.valid).length;
+
+  $('dbRank').textContent=mine.valid
+    ? `${mine.rank}위 / ${validTotal}명`
+    : `— / ${validTotal}명`;
+
+  $('dbDelta').textContent=
+    (mine.offset>=0?'+':'')+(mine.offset/1000).toFixed(3)+' s';
+
+  $('dbResultText').textContent=mine.valid
+    ? (mine.rank<=5?'최상위권 진입':
+       mine.rank<=15?'상위권 진입':
+       mine.rank<=30?'중위권':
+       '하위권 · 타이밍을 더 당겨보세요.')
+    : '';
+
+  $('dbScoreTable').innerHTML=scored.map(x=>{
+    const ts=dbSimState.targetTs+x.offset;
+    return `<div class="dbScoreRow ${x.valid?'':'invalid'} ${x.me?'me':''}">
+      <div class="dbScoreRank">${x.valid?x.rank:'—'}</div>
+      <div class="dbScoreName">${escapeHtml(x.name)}</div>
+      <div class="dbScoreTime">${dbTimeLabel(ts)}</div>
+      <div class="dbScoreDelta">${x.offset>=0?'+':''}${(x.offset/1000).toFixed(3)}</div>
+    </div>`;
+  }).join('');
+
+  $('dbResult').style.display='block';
+  $('dbSimGuide').textContent='결과가 나왔습니다.';
+  $('dbSendBtn').textContent='RETRY';
+  $('dbSimBattleBtn').style.display='';
+}
+
+/* DB SIM MULTI */
+
+async function createDbBattleRoom(){
+  if(!currentSession?.user?.id)throw new Error('회원 로그인이 필요합니다.');
+
+  let room=null,lastError=null;
+  for(let i=0;i<20;i++){
+    const code=randomRoomCode();
+    const seed=(Math.random()*2147483647)|0;
+    const {data,error}=await sb.from('db_sim_rooms').insert({
+      code,
+      host_user_id:currentSession.user.id,
+      seed,
+      status:'waiting'
+    }).select('*').single();
+
+    if(!error){room=data;break}
+    lastError=error;
+    if(error.code!=='23505')throw error;
+  }
+  if(!room)throw lastError||new Error('방 코드 생성에 실패했습니다.');
+
+  const {error:joinErr}=await sb.from('db_sim_players').insert({
+    room_id:room.id,
+    user_id:currentSession.user.id,
+    nickname:profile.nickname,
+    ready:false
+  });
+  if(joinErr)throw joinErr;
+  await enterDbBattleRoom(room);
+}
+
+async function joinDbBattleRoom(){
+  if(!currentSession?.user?.id)throw new Error('회원 로그인이 필요합니다.');
+  const code=$('dbBattleCodeInput').value.trim();
+  if(!/^\d{4}$/.test(code))throw new Error('4자리 숫자 방 코드를 입력하세요.');
+
+  const {data:room,error}=await sb.from('db_sim_rooms')
+    .select('*').eq('code',code).in('status',['waiting','countdown']).maybeSingle();
+  if(error||!room)throw new Error('입장 가능한 방을 찾지 못했습니다.');
+
+  const {error:joinErr}=await sb.from('db_sim_players').upsert({
+    room_id:room.id,
+    user_id:currentSession.user.id,
+    nickname:profile.nickname,
+    ready:false,
+    user_offset_ms:null,
+    sent_at:null
+  },{onConflict:'room_id,user_id'});
+  if(joinErr)throw joinErr;
+  await enterDbBattleRoom(room);
+}
+
+async function enterDbBattleRoom(room){
+  dbBattleState.active=true;
+  dbBattleState.room=room;
+  dbBattleState.ready=false;
+  dbBattleState.resultShown=false;
+  dbBattleState.localStarted=false;
+  $('dbBattleEntry').style.display='none';
+  $('dbBattleRoom').style.display='';
+  $('dbBattleRoomCode').textContent=room.code;
+  await subscribeDbBattle(room.id);
+  await refreshDbBattle();
+  renderOnlineList('dbRoomOnlineList','dbsim');
+}
+
+async function subscribeDbBattle(roomId){
+  if(dbBattleState.channel)await sb.removeChannel(dbBattleState.channel);
+  dbBattleState.channel=sb.channel(`dbsim-${roomId}`)
+    .on('postgres_changes',{event:'*',schema:'public',table:'db_sim_rooms',filter:`id=eq.${roomId}`},()=>refreshDbBattle())
+    .on('postgres_changes',{event:'*',schema:'public',table:'db_sim_players',filter:`room_id=eq.${roomId}`},()=>refreshDbBattle())
+    .subscribe();
+}
+
+async function refreshDbBattle(){
+  if(!dbBattleState.active||!dbBattleState.room)return;
+  const roomId=dbBattleState.room.id;
+  const [{data:room},{data:players}]=await Promise.all([
+    sb.from('db_sim_rooms').select('*').eq('id',roomId).single(),
+    sb.from('db_sim_players').select('*').eq('room_id',roomId).order('joined_at',{ascending:true})
+  ]);
+  if(!room)return;
+
+  const prev=dbBattleState.room.status;
+  dbBattleState.room=room;
+  dbBattleState.players=players||[];
+  renderDbBattleLobby();
+
+  if((room.status==='countdown'||room.status==='running') && !dbBattleState.localStarted){
+    await syncDbBattleStart(room);
+  }
+
+  // Human messages appear live in everyone's fake Kakao room.
+  if(dbSimState.active && dbBattleState.players.length){
+    renderDbBattleHumanMessages();
+  }
+
+  if(room.status==='finished'){
+    maybeShowDbBattleResult();
+  }else if(dbBattleState.players.length>=2 &&
+           dbBattleState.players.every(p=>p.sent_at)){
+    if(room.host_user_id===currentSession?.user?.id){
+      await sb.from('db_sim_rooms').update({status:'finished'}).eq('id',room.id);
+    }
+    maybeShowDbBattleResult();
+  }
+}
+
+function renderDbBattleLobby(){
+  const room=dbBattleState.room;
+  const players=dbBattleState.players;
+  $('dbBattleRoomCode').textContent=room.code;
+  const me=players.find(p=>p.user_id===currentSession?.user?.id);
+  dbBattleState.ready=!!me?.ready;
+  $('dbBattleReadyBtn').textContent=dbBattleState.ready?'READY ✓':'READY';
+  $('dbBattleReadyBtn').classList.toggle('shareBtn',dbBattleState.ready);
+
+  $('dbBattlePlayers').innerHTML=players.map(p=>
+    `<div class="battlePlayer">
+      <img src="${defaultAvatar()}" alt="">
+      <div><b>${escapeHtml(p.nickname)}</b>${p.user_id===room.host_user_id?' <span class="small">HOST</span>':''}</div>
+      <div class="readyPill ${p.ready?'on':''}">${p.ready?'READY':'WAIT'}</div>
+    </div>`
+  ).join('');
+
+  const allReady=players.length>=2&&players.every(p=>p.ready);
+  const isHost=room.host_user_id===currentSession?.user?.id;
+  $('dbBattleStartBtn').style.display=isHost?'':'none';
+  $('dbBattleStartBtn').disabled=!allReady||room.status!=='waiting';
+
+  $('dbBattleRoomStatus').textContent=
+    room.status==='waiting'
+      ? `${players.length}명 참가 · 전원 READY 후 시작`
+      : room.status==='countdown'
+      ? '가상 17:59:55 시작 대기...'
+      : room.status==='running'
+      ? 'DB SIM 진행 중'
+      : '경기 종료';
+}
+
+async function toggleDbBattleReady(){
+  const next=!dbBattleState.ready;
+  const {error}=await sb.from('db_sim_players').update({ready:next})
+    .eq('room_id',dbBattleState.room.id)
+    .eq('user_id',currentSession.user.id);
+  if(error)throw error;
+}
+
+async function hostStartDbBattle(){
+  const players=dbBattleState.players;
+  if(players.length<2||!players.every(p=>p.ready))throw new Error('2명 이상 전원 READY가 필요합니다.');
+
+  const simStartAt=new Date(Date.now()+4000).toISOString();
+  await sb.from('db_sim_players').update({
+    user_offset_ms:null,
+    sent_at:null
+  }).eq('room_id',dbBattleState.room.id);
+
+  const {error}=await sb.from('db_sim_rooms').update({
+    status:'countdown',
+    sim_start_at:simStartAt
+  }).eq('id',dbBattleState.room.id);
+  if(error)throw error;
+}
+
+async function syncDbBattleStart(room){
+  if(!room.sim_start_at)return;
+  dbBattleState.localStarted=true;
+  $('dbBattleOverlay').classList.remove('show');
+  setMode('dbsim');
+  resetDbSim();
+
+  const realStart=new Date(room.sim_start_at).getTime();
+  const wait=Math.max(0,realStart-Date.now());
+
+  $('dbSimGuide').textContent='동기화 중...';
+  $('dbSendBtn').textContent='SEND';
+  $('dbSimBattleBtn').style.display='none';
+
+  setTimeout(()=>{
+    if(!dbBattleState.active)return;
+    startDbSimMulti(room);
+    if(room.status!=='running'&&room.host_user_id===currentSession?.user?.id){
+      sb.from('db_sim_rooms').update({status:'running'}).eq('id',room.id);
+    }
+  },wait);
+}
+
+function startDbSimMulti(room){
+  resetDbSim();
+  dbSimState.active=true;
+  dbSimState.bots=makeDbBots(room.seed);
+  $('dbPeopleCount').textContent=`${dbSimState.bots.length+dbBattleState.players.length}명`;
+  $('dbSendBtn').textContent='SEND';
+  $('dbSimBattleBtn').style.display='none';
+  $('dbSimClock').textContent='17:59:55.000';
+  $('dbSimGuide').textContent='가상시간 17:59:55.000 · 5초 뒤 18:00:00.000';
+  $('dbSendHint').textContent='PC Enter / Space 또는 SEND 버튼 = 즉시 전송';
+
+  const virtualStart=new Date(2000,0,1,17,59,55,0);
+  dbSimState.simBaseReal=performance.now();
+  dbSimState.simBaseTs=virtualStart.getTime();
+  dbSimState.targetTs=dbSimState.simBaseTs+5000;
+
+  addDbMessage('관리자',dbSimState.simBaseTs-8500,false,'18시 신규DB 요청 준비해주세요.');
+  addDbMessage('민수',dbSimState.simBaseTs-5200,false,'확인했습니다.');
+  addDbMessage('예진',dbSimState.simBaseTs-2800,false,'네');
+
+  dbSimState.clockTimer=setInterval(()=>{
+    const simNow=dbSimNow();
+    $('dbSimClock').textContent=dbTimeLabel(simNow);
+    const left=dbSimState.targetTs-simNow;
+    if(left>0)$('dbSimGuide').textContent=`18:00 요청까지 ${(left/1000).toFixed(3)}초`;
+    else if(!dbSimState.sent)$('dbSimGuide').textContent='18:00:00.000 · NOW';
+  },16);
+
+  for(const bot of dbSimState.bots){
+    const delay=Math.max(0,(dbSimState.targetTs+bot.offset)-dbSimState.simBaseTs);
+    dbSimState.timers.push(setTimeout(()=>{
+      if(dbSimState.active)addDbMessage(bot.name,dbSimState.targetTs+bot.offset,false);
+    },delay));
+  }
+
+  dbSimState.timers.push(setTimeout(()=>{
+    if(dbBattleState.active)refreshDbBattle();
+  },5700));
+}
+
+function renderDbBattleHumanMessages(){
+  if(!dbSimState.active||!dbSimState.targetTs)return;
+  const chat=$('dbChat');
+
+  // Remove previously rendered human battle messages, then re-add from DB.
+  [...chat.querySelectorAll('[data-human-battle="1"]')].forEach(x=>x.remove());
+
+  for(const p of dbBattleState.players){
+    if(p.user_offset_ms===null||p.user_offset_ms===undefined)continue;
+    const ts=dbSimState.targetTs+Number(p.user_offset_ms);
+    const row=document.createElement('div');
+    row.className='dbMsg'+(p.user_id===currentSession?.user?.id?' me':'');
+    row.dataset.ts=String(ts);
+    row.dataset.humanBattle='1';
+    row.innerHTML=`<div class="dbName">${escapeHtml(p.nickname)}</div><div class="dbBubble">${escapeHtml(`${p.nickname} 0 디비요청드립니다`)}</div><div class="dbTime">${dbTimeLabel(ts)}</div>`;
+    const children=[...chat.children];
+    const before=children.find(x=>Number(x.dataset.ts)>ts);
+    if(before)chat.insertBefore(row,before); else chat.appendChild(row);
+  }
+  chat.scrollTop=chat.scrollHeight;
+}
+
+async function sendDbBattleRequest(){
+  if(!dbBattleState.active||!dbSimState.active||dbSimState.sent)return false;
+  dbSimState.sent=true;
+  const ts=dbSimNow();
+  dbSimState.userOffset=ts-dbSimState.targetTs;
+
+  const {error}=await sb.from('db_sim_players').update({
+    user_offset_ms:dbSimState.userOffset,
+    sent_at:new Date().toISOString()
+  }).eq('room_id',dbBattleState.room.id).eq('user_id',currentSession.user.id);
+
+  if(error){
+    dbSimState.sent=false;
+    throw error;
+  }
+
+  $('dbSimGuide').textContent=`전송 완료 · ${dbSimState.userOffset>=0?'+':''}${(dbSimState.userOffset/1000).toFixed(3)}초`;
+  await refreshDbBattle();
+  return true;
+}
+
+async function maybeShowDbBattleResult(){
+  if(dbBattleState.resultShown)return;
+  const humans=dbBattleState.players;
+  if(humans.length<2||!humans.every(p=>p.sent_at))return;
+
+  dbBattleState.resultShown=true;
+  clearInterval(dbSimState.clockTimer);
+
+  const bots=makeDbBots(dbBattleState.room.seed).map(b=>({
+    name:b.name,
+    offset:Number(b.offset),
+    human:false,
+    user_id:null
+  }));
+  const people=humans.map(p=>({
+    name:p.nickname,
+    offset:Number(p.user_offset_ms),
+    human:true,
+    user_id:p.user_id
+  }));
+
+  const all=[...bots,...people].sort((a,b)=>a.offset-b.offset);
+
+  let validRank=0;
+  const scored=all.map(x=>{
+    const valid=x.offset>=0;
+    if(valid)validRank++;
+    return {...x,valid,rank:valid?validRank:null};
+  });
+
+  const myId=currentSession?.user?.id;
+  const mine=scored.find(x=>x.user_id===myId);
+  const humanValid=scored
+    .filter(x=>x.human&&x.valid)
+    .sort((a,b)=>a.offset-b.offset);
+  const myHumanRank=mine?.valid
+    ? humanValid.findIndex(x=>x.user_id===myId)+1
+    : null;
+
+  const hero=$('dbBattleResultHero');
+  hero.className='battleResultHero';
+
+  if(!mine?.valid){
+    hero.textContent='—';
+    hero.classList.add('place');
+  }else if(humans.length===2){
+    hero.textContent=myHumanRank===1?'WIN':'LOSE';
+    hero.classList.add(myHumanRank===1?'win':'lose');
+  }else{
+    hero.textContent=`${myHumanRank} PLACE`;
+    hero.classList.add(myHumanRank===1?'win':'place');
+  }
+
+  const validTotal=scored.filter(x=>x.valid).length;
+  $('dbBattleHumanSummary').textContent=mine?.valid
+    ? `전체 유효 ${validTotal}명 중 ${mine.rank}위 · 실제 참가자 중 ${myHumanRank}위`
+    : `전체 유효 ${validTotal}명 · 내 기록은 순위 제외`;
+
+  $('dbBattleResultList').innerHTML=scored.map(x=>{
+    const ts=dbSimState.targetTs+x.offset;
+    return `<div class="battleResultRow ${x.valid?'':'dbInvalid'} ${x.user_id===myId?'me':''}" style="${x.valid?'':'opacity:.48;background:#171a1f;color:#737b86'}">
+      <div style="font-weight:1000;text-align:center">${x.valid?x.rank:'—'}</div>
+      <div>
+        <b>${escapeHtml(x.name)}</b>
+        ${x.human?' <span class="small">PLAYER</span>':' <span class="small">AI</span>'}
+        <div class="small">${dbTimeLabel(ts)}</div>
+      </div>
+      <div class="battleResultScore">${x.offset>=0?'+':''}${(x.offset/1000).toFixed(3)}s</div>
+    </div>`;
+  }).join('');
+
+  $('dbBattleOverlay').classList.remove('show');
+  $('dbBattleResultOverlay').classList.add('show');
+}
+async function leaveDbBattle(){
+  if(dbBattleState.active&&dbBattleState.room&&currentSession?.user?.id){
+    await sb.from('db_sim_players').delete()
+      .eq('room_id',dbBattleState.room.id)
+      .eq('user_id',currentSession.user.id);
+
+    if(dbBattleState.room.host_user_id===currentSession.user.id){
+      await sb.from('db_sim_rooms').update({status:'finished'}).eq('id',dbBattleState.room.id);
+    }
+  }
+
+  if(dbBattleState.channel)await sb.removeChannel(dbBattleState.channel);
+  dbBattleState.active=false;
+  dbBattleState.room=null;
+  dbBattleState.players=[];
+  dbBattleState.channel=null;
+  dbBattleState.ready=false;
+  dbBattleState.resultShown=false;
+  dbBattleState.localStarted=false;
+
+  $('dbBattleRoom').style.display='none';
+  $('dbBattleEntry').style.display='';
+  $('dbBattleOverlay').classList.remove('show');
+  $('dbBattleResultOverlay').classList.remove('show');
+
+  resetDbSim();
+  $('dbSimBattleBtn').style.display='';
+  setMode('dbsim');
+}
+
+
+function randomRoomCode(){
+  return String(1000+((Math.random()*9000)|0));
+}
+
+async function battleAvatarPath(){
+  return memberProfile?.avatar_path||null;
+}
+
+async function createBattleRoom(){
+  if(!currentSession?.user?.id) throw new Error('회원 로그인이 필요합니다.');
+
+  let room=null,lastError=null;
+  for(let i=0;i<20;i++){
+    const code=randomRoomCode();
+    const {data,error}=await sb.from('battle_rooms').insert({
+      code,
+      host_user_id:currentSession.user.id,
+      duration:selectedDuration,
+      status:'waiting'
+    }).select('*').single();
+
+    if(!error){room=data;break}
+    lastError=error;
+    if(error.code!=='23505')throw error;
+  }
+  if(!room)throw lastError||new Error('방 코드 생성에 실패했습니다.');
+
+  const {error:joinErr}=await sb.from('battle_players').insert({
+    room_id:room.id,
+    user_id:currentSession.user.id,
+    nickname:profile.nickname,
+    avatar_path:await battleAvatarPath(),
+    ready:false
+  });
+  if(joinErr)throw joinErr;
+  await enterBattleRoom(room);
+}
+
+async function joinBattleRoom(){
+  if(!currentSession?.user?.id) throw new Error('회원 로그인이 필요합니다.');
+  const code=$('battleCodeInput').value.trim();
+  if(!/^\d{4}$/.test(code))throw new Error('4자리 숫자 방 코드를 입력하세요.');
+
+  const {data:room,error}=await sb.from('battle_rooms')
+    .select('*').eq('code',code).in('status',['waiting','countdown']).maybeSingle();
+  if(error||!room)throw new Error('입장 가능한 방을 찾지 못했습니다.');
+
+  const {error:joinErr}=await sb.from('battle_players').upsert({
+    room_id:room.id,
+    user_id:currentSession.user.id,
+    nickname:profile.nickname,
+    avatar_path:await battleAvatarPath(),
+    ready:false,
+    score:null,
+    grade:null,
+    avg_error:null,
+    max_combo:null,
+    taps:null,
+    finished_at:null
+  },{onConflict:'room_id,user_id'});
+  if(joinErr)throw joinErr;
+  await enterBattleRoom(room);
+}
+
+async function enterBattleRoom(room){
+  setDuration(Number(room.duration));
+  battleState.active=true;
+  battleState.room=room;
+  battleState.ready=false;
+  battleState.resultShown=false;
+  $('battleEntry').style.display='none';
+  $('battleRoom').style.display='';
+  $('battleRoomCode').textContent=room.code;
+  $('battleReadyBtn').textContent='READY';
+  $('battleReadyBtn').classList.remove('shareBtn');
+  await subscribeBattle(room.id);
+  await refreshBattle();
+  renderOnlineList('battleRoomOnlineList','battle');
+}
+
+async function subscribeBattle(roomId){
+  if(battleState.channel){
+    await sb.removeChannel(battleState.channel);
+  }
+  battleState.channel=sb.channel(`battle-${roomId}`)
+    .on('postgres_changes',{event:'*',schema:'public',table:'battle_rooms',filter:`id=eq.${roomId}`},()=>refreshBattle())
+    .on('postgres_changes',{event:'*',schema:'public',table:'battle_players',filter:`room_id=eq.${roomId}`},()=>refreshBattle())
+    .subscribe();
+}
+
+async function refreshBattle(){
+  if(!battleState.active||!battleState.room)return;
+  const roomId=battleState.room.id;
+
+  const [{data:room},{data:players}]=await Promise.all([
+    sb.from('battle_rooms').select('*').eq('id',roomId).single(),
+    sb.from('battle_players').select('*').eq('room_id',roomId).order('joined_at',{ascending:true})
+  ]);
+  if(!room)return;
+
+  const prevStatus=battleState.room.status;
+  battleState.room=room;
+  battleState.players=players||[];
+
+  renderBattleLobby();
+
+  if(room.status==='countdown' || room.status==='running'){
+    if(prevStatus!==room.status || !gameStarted){
+      await syncBattleStart(room);
+    }
+  }
+
+  if(room.status==='finished'){
+    maybeShowBattleResult();
+  }else if(battleState.players.length>=2 &&
+           battleState.players.every(p=>p.finished_at)){
+    if(room.host_user_id===currentSession?.user?.id){
+      await sb.from('battle_rooms').update({status:'finished'}).eq('id',room.id);
+    }
+    maybeShowBattleResult();
+  }
+}
+
+function renderBattleLobby(){
+  const room=battleState.room;
+  const players=battleState.players;
+  $('battleRoomCode').textContent=room.code;
+  const me=players.find(p=>p.user_id===currentSession?.user?.id);
+  battleState.ready=!!me?.ready;
+  $('battleReadyBtn').textContent=battleState.ready?'READY ✓':'READY';
+  $('battleReadyBtn').classList.toggle('shareBtn',battleState.ready);
+
+  $('battlePlayers').innerHTML=players.map(p=>
+    `<div class="battlePlayer">
+      <img src="${defaultAvatar()}" data-avatar-path="${escapeHtml(p.avatar_path||'')}" alt="">
+      <div><b>${escapeHtml(p.nickname)}</b>${p.user_id===room.host_user_id?' <span class="small">HOST</span>':''}</div>
+      <div class="readyPill ${p.ready?'on':''}">${p.ready?'READY':'WAIT'}</div>
+    </div>`
+  ).join('');
+
+  $('battlePlayers').querySelectorAll('img[data-avatar-path]').forEach(async img=>{
+    const path=img.dataset.avatarPath;
+    if(path){
+      const url=await signedAvatar(path);
+      if(url)img.src=url;
+    }
+  });
+
+  const allReady=players.length>=2 && players.every(p=>p.ready);
+  const isHost=room.host_user_id===currentSession?.user?.id;
+  $('battleStartBtn').style.display=isHost?'':'none';
+  $('battleStartBtn').disabled=!allReady || room.status!=='waiting';
+
+  $('battleRoomStatus').textContent=
+    room.status==='waiting'
+      ? `${room.duration}초 · ${players.length}명 참가 · 전원 READY 후 시작`
+      : room.status==='countdown'
+      ? '곧 시작합니다...'
+      : room.status==='running'
+      ? 'BATTLE 진행 중'
+      : '경기 종료';
+}
+
+async function toggleBattleReady(){
+  const next=!battleState.ready;
+  const {error}=await sb.from('battle_players')
+    .update({ready:next})
+    .eq('room_id',battleState.room.id)
+    .eq('user_id',currentSession.user.id);
+  if(error)throw error;
+}
+
+async function hostStartBattle(){
+  const players=battleState.players;
+  if(players.length<2||!players.every(p=>p.ready))throw new Error('2명 이상 전원 READY가 필요합니다.');
+  const startsAt=new Date(Date.now()+4000).toISOString();
+
+
+  const {error}=await sb.from('battle_rooms').update({
+    status:'countdown',
+    starts_at:startsAt
+  }).eq('id',battleState.room.id);
+  if(error)throw error;
+}
+
+async function syncBattleStart(room){
+  if(!room.starts_at)return;
+  battleOverlay.classList.remove('show');
+  setDuration(Number(room.duration));
+  resetGame();
+  $('startBtn').style.display='none';
+  gameArmed=true;
+  judge.textContent='GET READY';
+  error.textContent='BATTLE';
+  const target=new Date(room.starts_at).getTime();
+
+  clearInterval(countdownTimer);
+  const tick=()=>{
+    const diff=target-Date.now();
+    if(diff<=0){
+      clearInterval(countdownTimer);
+      $('countdown').textContent='GO!';
+      gameArmed=false;
+      startGame();
+      setTimeout(()=>$('countdown').textContent='',500);
+      if(room.status!=='running' && room.host_user_id===currentSession?.user?.id){
+        sb.from('battle_rooms').update({status:'running'}).eq('id',room.id);
+      }
+      return;
+    }
+    $('countdown').textContent=String(Math.max(1,Math.ceil(diff/1000)));
+  };
+  tick();
+  countdownTimer=setInterval(tick,100);
+}
+
+async function submitBattleResult(record){
+  if(!battleState.active||!battleState.room||!currentSession?.user?.id)return;
+  const {error}=await sb.from('battle_players').update({
+    score:record.score,
+    grade:record.grade,
+    avg_error:record.avg_error/1000,
+    max_combo:record.max_combo,
+    taps:record.taps,
+    finished_at:new Date().toISOString()
+  }).eq('room_id',battleState.room.id).eq('user_id',currentSession.user.id);
+  if(error)throw error;
+
+  // 배틀에서는 개인 결과창 대신 모든 참가자 종료를 기다린다.
+  resultOverlay.classList.remove('show');
+  $('fanfareText').classList.remove('show');
+  await refreshBattle();
+  $('battleRoomStatus').textContent='다른 참가자의 종료를 기다리는 중...';
+  battleOverlay.classList.add('show');
+}
+
+async function maybeShowBattleResult(){
+  if(battleState.resultShown)return;
+  const players=battleState.players;
+  if(players.length<2 || !players.every(p=>p.finished_at))return;
+
+  battleState.resultShown=true;
+  const sorted=[...players].sort((a,b)=>
+    Number(b.score||0)-Number(a.score||0) ||
+    Number(a.avg_error||999)-Number(b.avg_error||999)
+  );
+  const myId=currentSession?.user?.id;
+  const myIndex=sorted.findIndex(p=>p.user_id===myId);
+  const hero=$('battleResultHero');
+
+  hero.className='battleResultHero';
+  if(sorted.length===2){
+    if(myIndex===0){hero.textContent='WIN';hero.classList.add('win')}
+    else{hero.textContent='LOSE';hero.classList.add('lose')}
+  }else{
+    hero.textContent=`${myIndex+1} PLACE`;
+    hero.classList.add(myIndex===0?'win':'place');
+  }
+
+  $('battleResultList').innerHTML=sorted.map((p,i)=>
+    `<div class="battleResultRow ${p.user_id===myId?'me':''}">
+      <div style="font-weight:1000;text-align:center">${i+1}</div>
+      <div><b>${escapeHtml(p.nickname)}</b><div class="small">${escapeHtml(p.grade||'—')}</div></div>
+      <div class="battleResultScore">${Number(p.score||0)}</div>
+    </div>`
+  ).join('');
+
+  battleOverlay.classList.remove('show');
+  battleResultOverlay.classList.add('show');
+}
+
+async function leaveBattle(){
+  if(battleState.active&&battleState.room&&currentSession?.user?.id){
+    await sb.from('battle_players').delete()
+      .eq('room_id',battleState.room.id)
+      .eq('user_id',currentSession.user.id);
+    if(battleState.room.host_user_id===currentSession.user.id){
+      await sb.from('battle_rooms').update({status:'finished'}).eq('id',battleState.room.id);
+    }
+  }
+  if(battleState.channel)await sb.removeChannel(battleState.channel);
+  battleState.active=false;
+  battleState.room=null;
+  battleState.players=[];
+  battleState.channel=null;
+  battleState.resultShown=false;
+  $('battleRoom').style.display='none';
+  $('battleEntry').style.display='';
+  $('battleOverlay').classList.remove('show');
+  $('battleResultOverlay').classList.remove('show');
+  setMode('solo');
+  resetGame();
+}
+
+
+/* MEMBER AUTH */
+
+function setMemberPanel(id){
+  ['loginPanel','signupPanel'].forEach(x=>{
+    $(x)?.classList.toggle('active',x===id);
+  });
+}
+
+function memberMessage(id,msg,ok=false){
+  const el=$(id);
+  if(!el)return;
+  el.textContent=msg||'';
+  el.style.color=ok?'#63e6be':'#ff9b71';
+}
+
+async function invokeMemberFunction(slug,body,withAuth=false){
+  const headers={'Content-Type':'application/json',apikey:SUPABASE_KEY};
+
+  if(withAuth && currentSession?.access_token){
+    headers.Authorization=`Bearer ${currentSession.access_token}`;
+  }
+
+  const res=await fetch(`${SUPABASE_URL}/functions/v1/${slug}`,{
+    method:'POST',
+    headers,
+    body:JSON.stringify(body||{})
+  });
+
+  const text=await res.text();
+  let data={};
+  try{data=JSON.parse(text)}catch{data={message:text}}
+
+  if(!res.ok){
+    throw new Error(data.error||data.message||'요청에 실패했습니다.');
+  }
+
+  return data;
+}
+
+async function signedAvatar(path){
+  if(!path)return '';
+  const {data,error}=await sb.storage.from('avatars').createSignedUrl(path,60*60*24);
+  if(error)return '';
+  return data.signedUrl;
+}
+
+async function fetchMemberProfile(){
+  if(!currentSession?.user?.id)return null;
+
+  const {data,error}=await sb
+    .from('profiles')
+    .select('user_id,username,nickname,avatar_path,is_admin')
+    .eq('user_id',currentSession.user.id)
+    .single();
+
+  if(error)throw error;
+
+  const avatar=await signedAvatar(data.avatar_path);
+
+  memberProfile={...data,avatar};
+
+  profile.nickname=data.nickname||data.username||'MEMBER';
+  profile.avatar=avatar||'';
+  profile.avatar_path=data.avatar_path||'';
+
+  saveProfile();
+  if($('dbPreparedMsg'))updateDbPrepared();
+
+  $('adminInviteBtn').style.display=data.is_admin?'':'none';
+
+  return memberProfile;
+}
+
+async function enterMemberMode(){
+  try{
+    await fetchMemberProfile();
+    $('memberGate').classList.add('hidden');
+    await startPresence().catch(()=>{});
+    await startInviteListener().catch(()=>{});
+  }catch(err){
+    console.warn(err);
+    memberMessage('loginMsg','프로필을 불러오지 못했습니다.');
+    $('memberGate').classList.remove('hidden');
+  }
+}
+
+function leaveMemberMode(){
+  stopPresence();
+  if(inviteChannel){sb.removeChannel(inviteChannel);inviteChannel=null}
+  currentSession=null;
+  memberProfile=null;
+  guestMode=false;
+  $('rankBtn').style.display='';
+  $('logoutBtn').style.display='';
+  $('profileBtn').style.display='';
+  $('memberGate').classList.remove('hidden');
+  setMemberPanel('loginPanel');
+}
+
+async function loginByUsername(){
+  const username=$('loginUsername').value.trim();
+  const password=$('loginPassword').value;
+
+  if(!username||!password){
+    memberMessage('loginMsg','아이디와 비밀번호를 입력하세요.');
+    return;
+  }
+
+  $('loginBtn').disabled=true;
+  $('loginBtn').textContent='로그인 중...';
+  memberMessage('loginMsg','');
+
+  try{
+    const data=await invokeMemberFunction(EDGE_SLUGS.loginUsername,{username,password},false);
+
+    const {data:sessionData,error}=await sb.auth.setSession({
+      access_token:data.access_token,
+      refresh_token:data.refresh_token
+    });
+
+    if(error)throw error;
+
+    currentSession=sessionData.session;
+    await enterMemberMode();
+
+  }catch(err){
+    memberMessage('loginMsg','아이디 또는 비밀번호를 확인하세요.');
+  }finally{
+    $('loginBtn').disabled=false;
+    $('loginBtn').textContent='LOGIN';
+  }
+}
+
+async function redeemInvite(){
+  const params=new URLSearchParams(location.search);
+  const token=params.get('invite');
+
+
+  const username=$('signupUsername').value.trim();
+  const password=$('signupPassword').value;
+  const nickname=$('signupNickname').value.trim()||username;
+  const avatarFile=$('signupAvatar').files?.[0]||null;
+
+  if(username.length<2){
+    memberMessage('signupMsg','아이디는 2자 이상으로 입력하세요.');
+    return;
+  }
+if(password.length<8){
+    memberMessage('signupMsg','비밀번호는 8자 이상으로 설정하세요.');
+    return;
+  }
+
+  $('signupBtn').disabled=true;
+  $('signupBtn').textContent='가입 중...';
+  memberMessage('signupMsg','');
+
+  try{
+    const data=await invokeMemberFunction(EDGE_SLUGS.redeemInvite,{
+      token,username,password,nickname
+    },false);
+
+    const {data:sessionData,error}=await sb.auth.setSession({
+      access_token:data.access_token,
+      refresh_token:data.refresh_token
+    });
+    if(error)throw error;
+
+    currentSession=sessionData.session;
+    await fetchMemberProfile();
+
+    if(avatarFile){
+      const uploaded=await sbUploadAvatar(avatarFile);
+      const {error:updateError}=await sb
+        .from('profiles')
+        .update({avatar_path:uploaded.path})
+        .eq('user_id',currentSession.user.id);
+      if(updateError)throw updateError;
+      await fetchMemberProfile();
+    }
+
+    history.replaceState({},'',location.pathname);
+    $('memberGate').classList.add('hidden');
+
+  }catch(err){
+    memberMessage('signupMsg',err.message||'가입에 실패했습니다.');
+  }finally{
+    $('signupBtn').disabled=false;
+    $('signupBtn').textContent='JOIN';
+  }
+}
+
+
+async function makeInvite(){
+  $('makeInviteBtn').disabled=true;
+  $('inviteResult').textContent='초대링크 만드는 중...';
+
+  try{
+    const data=await invokeMemberFunction(EDGE_SLUGS.createInvite,{
+      site_url:location.origin+location.pathname
+    },true);
+
+    currentInviteLink=data.invite_url;
+    $('inviteResult').textContent=currentInviteLink;
+
+  }catch(err){
+    $('inviteResult').textContent='초대링크 생성 실패: '+(err.message||'');
+  }finally{
+    $('makeInviteBtn').disabled=false;
+  }
+}
+
+async function shareInvite(){
+  if(!currentInviteLink)return;
+
+  try{
+    if(navigator.share){
+      await navigator.share({
+        title:'Millisecond Challenge 초대',
+        text:'팀 전용 Millisecond Challenge 초대링크입니다.',
+        url:currentInviteLink
+      });
+      return;
+    }
+  }catch(err){
+    if(err?.name==='AbortError')return;
+  }
+
+  await navigator.clipboard.writeText(currentInviteLink);
+  alert('초대링크를 복사했습니다.');
+}
+
+async function bootMemberAuth(){
+  const params=new URLSearchParams(location.search);
+  sb.auth.onAuthStateChange((_event,session)=>{ currentSession=session; });
+const {data:{session}}=await sb.auth.getSession();
+  currentSession=session;
+
+  if(params.get('invite')){
+    $('memberGate').classList.remove('hidden');
+    setMemberPanel('signupPanel');
+    return;
+  }
+if(currentSession){
+    await enterMemberMode();
+  }else{
+    $('memberGate').classList.remove('hidden');
+    setMemberPanel('loginPanel');
+  }
+}
+
+$('loginBtn').onclick=e=>{e.stopPropagation();loginByUsername()};
+$('publicSignupBtn').onclick=e=>{e.stopPropagation();setMemberPanel('signupPanel')};
+$('loginPassword').addEventListener('keydown',e=>{if(e.key==='Enter')loginByUsername()});
+$('signupBtn').onclick=e=>{e.stopPropagation();redeemInvite()};
+
+$('logoutBtn').onclick=async e=>{
+  e.stopPropagation();
+  await sb.auth.signOut();
+  leaveMemberMode();
+};
+
+$('adminInviteBtn').onclick=e=>{
+  e.stopPropagation();
+  if(!memberProfile?.is_admin){
+    alert('관리자만 초대할 수 있습니다.');
+    return;
+  }
+  currentInviteLink='';
+  $('inviteResult').textContent='아직 만든 링크가 없습니다.';
+  $('adminInviteOverlay').classList.add('show');
+};
+$('closeInviteBtn').onclick=e=>{e.stopPropagation();$('adminInviteOverlay').classList.remove('show')};
+$('makeInviteBtn').onclick=e=>{e.stopPropagation();makeInvite()};
+$('copyInviteBtn').onclick=async e=>{
+  e.stopPropagation();
+  if(!currentInviteLink)return;
+  await navigator.clipboard.writeText(currentInviteLink);
+  alert('초대링크를 복사했습니다.');
+};
+$('shareInviteBtn').onclick=e=>{e.stopPropagation();shareInvite()};
+
+
+/* profile */
+$('profileBtn').onclick=e=>{
+  e.stopPropagation();
+  pendingAvatarFile=null;
+  $('avatarInput').value='';
+  $('nicknameInput').value=profile.nickname||memberProfile?.nickname||'';
+  $('previewAvatar').src=profile.avatar||defaultAvatar();
+  profileOverlay.classList.add('show');
+};
+$('profileCancel').onclick=e=>{
+  e.stopPropagation();
+  pendingAvatarFile=null;
+  $('avatarInput').value='';
+  profileOverlay.classList.remove('show');
+};
+$('avatarInput').addEventListener('change',e=>{
+  const f=e.target.files?.[0];
+  if(!f)return;
+
+  if(f.size>3*1024*1024){
+    alert('사진은 3MB 이하로 선택해주세요.');
+    e.target.value='';
+    return;
+  }
+
+  pendingAvatarFile=f;
+
+  const reader=new FileReader();
+  reader.onload=()=>{$('previewAvatar').src=reader.result};
+  reader.readAsDataURL(f);
+});
+$('profileSave').onclick=async e=>{
+  e.stopPropagation();
+  unlockAudioFromGesture();
+
+  if(!currentSession?.user?.id){
+    alert('로그인이 필요합니다.');
+    return;
+  }
+
+  const n=$('nicknameInput').value.trim();
+  const newNickname=n||memberProfile?.username||'MEMBER';
+
+  $('profileSave').disabled=true;
+  $('profileSave').textContent='저장 중...';
+
+  try{
+    let avatarPath=memberProfile?.avatar_path||null;
+
+    if(pendingAvatarFile){
+      const uploaded=await sbUploadAvatar(pendingAvatarFile);
+      avatarPath=uploaded.path;
+      pendingAvatarFile=null;
+      $('avatarInput').value='';
+    }
+
+    const {error:updateError}=await sb
+      .from('profiles')
+      .update({
+        nickname:newNickname,
+        avatar_path:avatarPath,
+        updated_at:new Date().toISOString()
+      })
+      .eq('user_id',currentSession.user.id);
+
+    if(updateError)throw updateError;
+
+    await fetchMemberProfile();
+    profileOverlay.classList.remove('show');
+
+  }catch(err){
+    console.warn(err);
+    alert('프로필 저장에 실패했습니다.');
+  }finally{
+    $('profileSave').disabled=false;
+    $('profileSave').textContent='저장';
+  }
+};
+
+/* ranking */
+$('rankBtn').onclick=e=>{e.stopPropagation();rankOverlay.classList.add('show');renderRank()};
+$('rankClose').onclick=e=>{e.stopPropagation();rankOverlay.classList.remove('show')};
+document.querySelectorAll('.rankTab').forEach(btn=>{
+  btn.onclick=e=>{
+    e.stopPropagation();
+    document.querySelectorAll('.rankTab').forEach(x=>x.classList.remove('active'));
+    btn.classList.add('active');
+    rankMode=btn.dataset.mode;
+    renderRank();
+  };
+});
+$('resultRank').onclick=e=>{
+  e.stopPropagation();
+  resultOverlay.classList.remove('show');
+  rankOverlay.classList.add('show');
+  renderRank();
+};
+
+
+
+$('refreshBattleOnlineBtn').onclick=e=>{e.stopPropagation();renderOnlineList('battleOnlineList','battle')};
+$('refreshBattleRoomOnlineBtn').onclick=e=>{e.stopPropagation();renderOnlineList('battleRoomOnlineList','battle')};
+$('refreshDbOnlineBtn').onclick=e=>{e.stopPropagation();renderOnlineList('dbOnlineList','dbsim')};
+$('refreshDbRoomOnlineBtn').onclick=e=>{e.stopPropagation();renderOnlineList('dbRoomOnlineList','dbsim')};
+$('gameInviteAccept').onclick=async e=>{
+  e.stopPropagation();
+  try{await acceptIncomingInvite()}catch(err){alert(err.message||'입장에 실패했습니다.')}
+};
+$('gameInviteDecline').onclick=async e=>{e.stopPropagation();await declineIncomingInvite()};
+
+$('sec30Btn').onclick=e=>{e.stopPropagation();setDuration(30);resetGame()};
+$('sec60Btn').onclick=e=>{e.stopPropagation();setDuration(60);resetGame()};
+$('battleModeBtn').onclick=e=>{e.stopPropagation();setMode(currentMode==='battle'?'solo':'battle')};
+$('dbSimModeBtn').onclick=e=>{e.stopPropagation();setMode(currentMode==='dbsim'?'solo':'dbsim')};
+$('dbSendBtn').onclick=e=>{
+  e.stopPropagation();
+
+  if(currentMode!=='dbsim')return;
+
+  if(!dbSimState.active || dbSimState.finished){
+    resetDbSim();
+    startDbSim();
+    return;
+  }
+
+  if(dbSimState.sent)return;
+
+  if(dbBattleState.active){
+    sendDbBattleRequest().catch(err=>console.warn(err));
+  }else{
+    sendDbRequest();
+  }
+};
+$('dbSimBattleBtn').onclick=e=>{
+  e.stopPropagation();
+  if(guestMode||!currentSession?.user){
+    alert('DB SIM 배틀은 회원 로그인 후 이용할 수 있습니다.');
+    return;
+  }
+  $('dbBattleOverlay').classList.add('show');
+  renderOnlineList('dbOnlineList','dbsim');
+  renderOnlineList('dbRoomOnlineList','dbsim');
+};
+$('dbBattleClose').onclick=e=>{
+  e.stopPropagation();
+  if(!dbBattleState.active)$('dbBattleOverlay').classList.remove('show');
+};
+$('createDbBattleBtn').onclick=async e=>{
+  e.stopPropagation();
+  memberMessage('dbBattleMsg','');
+  try{await createDbBattleRoom()}catch(err){memberMessage('dbBattleMsg',err.message||'방 생성 실패')}
+};
+$('joinDbBattleBtn').onclick=async e=>{
+  e.stopPropagation();
+  memberMessage('dbBattleMsg','');
+  try{await joinDbBattleRoom()}catch(err){memberMessage('dbBattleMsg',err.message||'방 참가 실패')}
+};
+$('dbBattleReadyBtn').onclick=async e=>{
+  e.stopPropagation();
+  try{await toggleDbBattleReady()}catch(err){alert(err.message)}
+};
+$('dbBattleStartBtn').onclick=async e=>{
+  e.stopPropagation();
+  try{await hostStartDbBattle()}catch(err){alert(err.message)}
+};
+$('dbBattleLeaveBtn').onclick=async e=>{e.stopPropagation();await leaveDbBattle()};
+$('dbBattleShareBtn').onclick=async e=>{
+  e.stopPropagation();
+  const code=dbBattleState.room?.code||'';
+  const text=`Millisecond Challenge DB SIM 방 코드: ${code}`;
+  try{
+    if(navigator.share){await navigator.share({title:'DB SIM Battle',text});return}
+  }catch(err){if(err?.name==='AbortError')return}
+  await navigator.clipboard.writeText(code);
+  alert('방 코드를 복사했습니다.');
+};
+$('dbBattleResultClose').onclick=async e=>{e.stopPropagation();await leaveDbBattle()};
+
+$('openBattleBtn').onclick=e=>{
+  e.stopPropagation();
+  if(guestMode||!currentSession?.user){alert('배틀은 회원 로그인 후 이용할 수 있습니다.');return}
+  $('battleOverlay').classList.add('show');
+  renderOnlineList('battleOnlineList','battle');
+  renderOnlineList('battleRoomOnlineList','battle');
+};
+$('battleClose').onclick=e=>{e.stopPropagation();if(!battleState.active)$('battleOverlay').classList.remove('show')};
+$('createBattleBtn').onclick=async e=>{
+  e.stopPropagation();memberMessage('battleMsg','');
+  try{await createBattleRoom()}catch(err){memberMessage('battleMsg',err.message||'방 생성 실패')}
+};
+$('joinBattleBtn').onclick=async e=>{
+  e.stopPropagation();memberMessage('battleMsg','');
+  try{await joinBattleRoom()}catch(err){memberMessage('battleMsg',err.message||'방 참가 실패')}
+};
+$('battleReadyBtn').onclick=async e=>{e.stopPropagation();try{await toggleBattleReady()}catch(err){alert(err.message)}};
+$('battleStartBtn').onclick=async e=>{e.stopPropagation();try{await hostStartBattle()}catch(err){alert(err.message)}};
+$('battleLeaveBtn').onclick=async e=>{e.stopPropagation();await leaveBattle()};
+$('battleShareBtn').onclick=async e=>{
+  e.stopPropagation();
+  const code=battleState.room?.code||'';
+  const text=`Millisecond Challenge 배틀 방 코드: ${code}`;
+  try{
+    if(navigator.share){await navigator.share({title:'Millisecond Challenge Battle',text});return}
+  }catch(err){if(err?.name==='AbortError')return}
+  await navigator.clipboard.writeText(code);
+  alert('방 코드를 복사했습니다.');
+};
+$('battleResultClose').onclick=async e=>{e.stopPropagation();await leaveBattle()};
+$('guestPlayBtn').onclick=e=>{e.stopPropagation();enterGuestMode()};
+
+/* sound */
+$('soundBtn').onclick=async e=>{
+  e.stopPropagation();
+  if(soundEnabled){
+    stopSound();
+  }else{
+    try{await startSound()}catch{}
+  }
+};
+
+/* game input */
+document.addEventListener('pointerdown',e=>{
+  if(e.target.closest('button')||e.target.closest('input'))return;
+  if(profileOverlay.classList.contains('show')||rankOverlay.classList.contains('show')||resultOverlay.classList.contains('show')||battleOverlay.classList.contains('show')||battleResultOverlay.classList.contains('show')||dbBattleOverlay.classList.contains('show')||dbBattleResultOverlay.classList.contains('show')||gameInviteOverlay.classList.contains('show'))return;
+  if(currentMode==='dbsim')return;
+  record();
+});
+
+// PC: Enter key works exactly like tapping the game area.
+// Ignore key-repeat and do not trigger while typing or while a modal is open.
+document.addEventListener('keydown',e=>{
+  if((e.key!=='Enter' && e.key!==' ') || e.repeat)return;
+  const tag=document.activeElement?.tagName?.toLowerCase();
+  if(tag==='input' || tag==='textarea' || tag==='select' || document.activeElement?.isContentEditable)return;
+  if(profileOverlay.classList.contains('show')||rankOverlay.classList.contains('show')||resultOverlay.classList.contains('show')||battleOverlay.classList.contains('show')||battleResultOverlay.classList.contains('show')||dbBattleOverlay.classList.contains('show')||dbBattleResultOverlay.classList.contains('show')||gameInviteOverlay.classList.contains('show'))return;
+  e.preventDefault();
+  if(currentMode==='dbsim'){
+    if(dbBattleState.active)sendDbBattleRequest().catch(err=>console.warn(err));
+    else sendDbRequest();
+    return;
+  }
+  record();
+});
+
+$('startBtn').onclick=e=>{
+  e.stopPropagation();
+  armGame();
+};
+
+$('reset').onclick=e=>{e.stopPropagation();resetGame()};
+$('resultReset').onclick=e=>{e.stopPropagation();resetGame()};
+$('continueBtn').onclick=e=>{e.stopPropagation();continueGame()};
+$('share').onclick=e=>{e.stopPropagation();shareScore()};
+
+$('soundBtn').classList.add('on');
+setDuration(60);
+setMode('solo');
+updateStats();
+updateClock();
+bootMemberAuth();
+})();
+</script>
+</body>
+</html>
