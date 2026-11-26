@@ -1412,6 +1412,7 @@ html[data-theme="kakao-dark"] #startBtn,
 html[data-theme="kakao-dark"] #dbSendBtn:not(.is-send){background:#34383d !important;color:#eceef0 !important;border:1px solid #50565e !important;box-shadow:none !important}
 html[data-theme="kakao"] #startBtn:hover,html[data-theme="kakao"] #dbSendBtn:hover{border-color:#a69a39 !important}
 </style>
+<link rel="manifest" href="./manifest.json"><meta name="theme-color" content="#24272a">
 </head>
 <body>
 
@@ -1595,7 +1596,7 @@ Excellent 이상 콤보 보너스 · 10 COMBO부터 가속 · 최대 7560 pts
         같은 가상 18:00:00.000과 같은 AI 60명을 상대로 동시에 경쟁합니다.
       </div>
       <div class="onlineBox">
-        <div class="onlineTitle"><span>현재 접속 중</span><button class="inviteMini" id="refreshDbOnlineBtn">새로고침</button></div>
+        <div class="onlineTitle"><span>회원 초대 · 오프라인 포함</span><button class="inviteMini" id="refreshDbOnlineBtn">새로고침</button></div>
         <div class="onlineList" id="dbOnlineList"><div class="small">불러오는 중...</div></div>
       </div>
       <button class="shareBtn" style="width:100%;margin-top:12px" id="createDbBattleBtn">빈 방 만들기</button>
@@ -1655,7 +1656,7 @@ Excellent 이상 콤보 보너스 · 10 COMBO부터 가속 · 최대 7560 pts
         60초 경기는 공식 일간·주간·역대 기록에 자동 반영됩니다.
       </div>
       <div class="onlineBox">
-        <div class="onlineTitle"><span>현재 접속 중</span><button class="inviteMini" id="refreshBattleOnlineBtn">새로고침</button></div>
+        <div class="onlineTitle"><span>회원 초대 · 오프라인 포함</span><button class="inviteMini" id="refreshBattleOnlineBtn">새로고침</button></div>
         <div class="onlineList" id="battleOnlineList"><div class="small">불러오는 중...</div></div>
       </div>
       <button class="shareBtn" style="width:100%;margin-top:12px" id="createBattleBtn">빈 방 만들기</button>
@@ -1727,7 +1728,7 @@ Excellent 이상 콤보 보너스 · 10 COMBO부터 가속 · 최대 7560 pts
     </div>
     <div class="onlineBox" style="margin-top:12px">
       <div class="onlineTitle">
-        <span>현재 접속 중</span>
+        <span>회원 초대 · 오프라인 포함</span>
         <button class="inviteMini" id="refreshLiveMultiBtn">새로고침</button>
       </div>
       <div class="onlineList" id="liveMultiList">
@@ -1778,6 +1779,7 @@ Excellent 이상 콤보 보너스 · 10 COMBO부터 가속 · 최대 7560 pts
       <div class="settingsRow"><div><div class="settingsLabel">햅틱</div><div class="settingsSub">지원 기기에서 입력 진동 피드백</div></div><button type="button" class="settingToggle" id="settingHapticBtn">ON</button></div>
       <div class="settingsRow serverTimeRow"><div class="serverTimeBox"><div class="settingsLabel">서버 시간 기준 URL</div><div class="settingsSub">시간보정 및 자동 동기화에 사용할 서버 주소</div><input id="serverTimeUrl" type="url" value="https://open.kakao.com" autocomplete="off" spellcheck="false"><button type="button" class="settingsTest serverSyncNow" id="serverSyncNowBtn">⏱ 지금 서버시간 동기화</button><div id="serverTimeStatus" class="serverTimeStatus" role="status" aria-live="polite">아직 동기화하지 않음</div><button type="button" class="settingsTest" id="copyTimeDiagBtn">진단값 복사</button><pre id="timeDiagBox" style="display:none;margin-top:8px;padding:8px 10px;border-radius:9px;background:rgba(0,0,0,.055);font-size:9px;line-height:1.35;white-space:pre-wrap;overflow-wrap:anywhere;max-height:220px;overflow:auto"></pre><div class="serverTimeSchedule">자동보정 · T−10 · T−5 · T−3 · T−1:30 최종 / T−1:00부터 자동보정 정지</div></div></div>
       <div class="settingsRow"><div><div class="settingsLabel">기본 시작 모드</div><div class="settingsSub">사이트를 열었을 때 처음 표시할 모드</div></div><select class="settingSelect" id="settingDefaultMode"><option value="dbsim">DB SIM</option><option value="60">60 SEC</option><option value="30">30 SEC</option><option value="game">GAME</option></select></div>
+      <div class="settingsRow"><div><div class="settingsLabel">스마트폰 알림</div><div class="settingsSub">이 기기에서 받을 알림 선택</div><label><input type="checkbox" id="pushInvite" checked> 게임 초대</label><br><label><input type="checkbox" id="pushGame" checked> GAME 추월</label><br><label><input type="checkbox" id="pushDb" checked> DB SIM 추월</label><div id="pushStatus" role="status"></div><button type="button" id="pushSave">알림 켜기 / 저장</button> <button type="button" id="pushOff">끄기</button></div></div>
       <button type="button" class="settingsTest" id="settingsWarningPreview">WARNING 미리보기</button>
       <button type="button" class="settingsTest" id="settingsFeedbackTest">피드백 테스트</button>
     </div>
@@ -3216,20 +3218,17 @@ function stopPresence(){
 
 async function fetchOnlineMembers(){
   if(!currentSession?.user?.id)return [];
-  const since=new Date(Date.now()-60000).toISOString();
-  const {data,error}=await sb.from('user_presence')
-    .select('user_id,nickname,last_seen')
-    .gte('last_seen',since)
-    .neq('user_id',currentSession.user.id)
-    .order('last_seen',{ascending:false});
+  const {data,error}=await sb.from('profiles').select('user_id,nickname').neq('user_id',currentSession.user.id).order('nickname');
   if(error)throw error;
-  return data||[];
+  const {data:presence}=await sb.from('user_presence').select('user_id,last_seen').gte('last_seen',new Date(Date.now()-60000).toISOString());
+  const online=new Set((presence||[]).map(x=>x.user_id));
+  return (data||[]).map(x=>({...x,online:online.has(x.user_id)})).sort((a,b)=>Number(b.online)-Number(a.online));
 }
 
 function onlineRowHtml(u,mode){
   const safeName=escapeHtml(u.nickname||'MEMBER');
   return `<div class="onlineRow">
-    <span class="onlineDot"></span>
+    <span class="onlineDot" style="${u.online?'':'opacity:.25'}"></span>
     <div class="onlineName">${safeName}</div>
     <button class="inviteMini" data-invite-user="${u.user_id}" data-invite-mode="${mode}">초대</button>
   </div>`;
@@ -3246,7 +3245,7 @@ async function renderOnlineList(targetId,mode){
     const users=await fetchOnlineMembers();
     el.innerHTML=users.length
       ? users.map(u=>onlineRowHtml(u,mode)).join('')
-      : '<div class="small">현재 접속 중인 다른 회원이 없습니다.</div>';
+      : '<div class="small">다른 회원이 없습니다.</div>';
 
     el.querySelectorAll('[data-invite-user]').forEach(btn=>{
       btn.onclick=async e=>{
@@ -3408,13 +3407,13 @@ async function renderLiveMultiHub(){
   try{
     const users=await fetchOnlineMembers();
     if(!users.length){
-      el.innerHTML='<div class="small">현재 접속 중인 다른 회원이 없습니다.</div>';
+      el.innerHTML='<div class="small">다른 회원이 없습니다.</div>';
       return;
     }
 
     el.innerHTML=users.map(u=>`
       <div class="onlineRow" style="grid-template-columns:10px 1fr auto auto">
-        <span class="onlineDot"></span>
+        <span class="onlineDot" style="${u.online?'':'opacity:.25'}"></span>
         <div class="onlineName">${escapeHtml(u.nickname||'MEMBER')}</div>
         <button class="inviteMini" data-live-user="${u.user_id}" data-live-mode="battle">GAME</button>
         <button class="inviteMini" data-live-user="${u.user_id}" data-live-mode="dbsim">DB SIM</button>
@@ -4606,6 +4605,7 @@ async function enterMemberMode(){
     $('logoutBtn').style.display='';
     await startPresence().catch(()=>{});
     await startInviteListener().catch(()=>{});
+    openPushTarget();
   }catch(err){
     console.warn(err);
     memberMessage('loginMsg','프로필을 불러오지 못했습니다.');
@@ -4852,8 +4852,20 @@ $('publicSignupBtn').onclick=e=>{e.stopPropagation();setMemberPanel('signupPanel
 $('loginPassword').addEventListener('keydown',e=>{if(e.key==='Enter')loginByUsername()});
 $('signupBtn').onclick=e=>{e.stopPropagation();redeemInvite()};
 
+
+// v88 Web Push: subscriptions are scoped to this browser and account.
+const pushStatus=t=>{$('pushStatus').textContent=t};
+async function pushReg(){if(!('serviceWorker' in navigator)||!('PushManager' in window))throw Error('지원 브라우저 또는 홈 화면 웹앱에서 열어주세요.');await navigator.serviceWorker.register('./sw.js');return navigator.serviceWorker.ready;}
+async function pushConfig(){const {data,error}=await sb.from('push_config').select('public_key').eq('id',1).single();if(error||!data?.public_key)throw Error('서버 알림 설정이 필요합니다.');return Uint8Array.from(atob(data.public_key.replace(/-/g,'+').replace(/_/g,'/').padEnd(Math.ceil(data.public_key.length/4)*4,'=')),c=>c.charCodeAt(0));}
+$('pushSave').onclick=async()=>{try{if(!currentSession?.user?.id)throw Error('로그인 필요');if(!('Notification' in window))throw Error('홈 화면 웹앱에서 열어주세요.');if(await Notification.requestPermission()!=='granted')throw Error('알림 권한을 허용해주세요.');const reg=await pushReg();const key=await pushConfig();let sub=await reg.pushManager.getSubscription();if(!sub)sub=await reg.pushManager.subscribe({userVisibleOnly:true,applicationServerKey:key});const {error}=await sb.rpc('tt_push_register',{p_subscription:sub.toJSON(),p_invite:$('pushInvite').checked,p_game:$('pushGame').checked,p_db:$('pushDb').checked});if(error)throw error;pushStatus('이 기기 알림 설정 완료');}catch(e){pushStatus(e.message||'설정 실패');}};
+async function disableDevicePush(){if(!('serviceWorker' in navigator))return;const reg=await navigator.serviceWorker.getRegistration('./');const sub=await reg?.pushManager.getSubscription();if(!sub)return;if(currentSession?.user?.id){const {error}=await sb.rpc('tt_push_remove',{p_endpoint:sub.endpoint});if(error)throw error;}await sub.unsubscribe();}
+$('pushOff').onclick=async()=>{try{await disableDevicePush();pushStatus('이 기기 알림 꺼짐');}catch(e){pushStatus(e.message);}};
+async function refreshPushSettings(){try{const reg=await pushReg();const sub=await reg.pushManager.getSubscription();if(!sub||!currentSession?.user?.id){pushStatus('알림 꺼짐');return;}const {data,error}=await sb.from('push_devices').select('invite,game,db').eq('endpoint',sub.endpoint).maybeSingle();if(error)throw error;if(data){$('pushInvite').checked=data.invite;$('pushGame').checked=data.game;$('pushDb').checked=data.db;}pushStatus(data?'이 기기 알림 켜짐':'알림 등록 필요');}catch(e){pushStatus(e.message);}}
+function openPushTarget(){if(!currentSession?.user?.id)return;const q=new URLSearchParams(location.search);const target=q.get('push');if(target==='game'||target==='dbsim'){rankGame=target;rankMode='all';document.querySelectorAll('[data-rank-game]').forEach(x=>x.classList.toggle('active',x.dataset.rankGame===target));document.querySelectorAll('[data-mode]').forEach(x=>x.classList.toggle('active',x.dataset.mode==='all'));rankOverlay.classList.add('show');renderRank();}if(target){q.delete('push');history.replaceState(null,'',location.pathname+(q.size?'?'+q:''));}}
+
 $('logoutBtn').onclick=async e=>{
   e.stopPropagation();
+  try{await disableDevicePush();}catch(e){alert("알림 해제 실패: "+e.message);return;}
   await sb.auth.signOut();
   leaveMemberMode();
 };
@@ -4889,6 +4901,7 @@ $('shareInviteBtn').onclick=e=>{e.stopPropagation();shareInvite()};
 
 /* profile */
 $('settingsBtn').onclick=e=>{
+  void refreshPushSettings();
   e.stopPropagation();
   syncThemeButtons();syncSettingsUI();
   $('settingsOverlay').classList.add('show');
